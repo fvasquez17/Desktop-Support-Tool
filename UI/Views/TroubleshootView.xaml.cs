@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using DesktopSupportTool.Helpers;
 using DesktopSupportTool.Models;
 using DesktopSupportTool.Services;
 
@@ -10,12 +11,41 @@ namespace DesktopSupportTool.UI.Views;
 /// <summary>
 /// Troubleshoot view — large clickable action cards for one-click fixes.
 /// Each action runs async, shows progress, and reports success/failure.
+/// Admin cards are visually distinguished for non-elevated users.
 /// </summary>
 public partial class TroubleshootView : UserControl
 {
+    private static readonly LoggingService _log = LoggingService.Instance;
+    private readonly bool _isAdmin;
+
     public TroubleshootView()
     {
         InitializeComponent();
+        _isAdmin = ElevationHelper.IsRunningAsAdmin();
+        Loaded += (s, e) => ApplyAdminVisibility();
+    }
+
+    /// <summary>
+    /// Dims admin-only cards when the app is not running elevated.
+    /// Cards remain clickable (UAC will prompt), but the visual
+    /// distinction makes it clear which actions require elevation.
+    /// </summary>
+    private void ApplyAdminVisibility()
+    {
+        var adminCards = new[]
+        {
+            CardStartMenu, CardPrint, CardQueue, CardNetReset,
+            CardWinUpdate, CardSfc, CardDism, CardIntune
+        };
+
+        if (!_isAdmin)
+        {
+            foreach (var card in adminCards)
+            {
+                if (card != null)
+                    card.Opacity = 0.7;
+            }
+        }
     }
 
     // ─── Application Resets ──────────────────────────────────────
@@ -206,11 +236,10 @@ public partial class TroubleshootView : UserControl
         }
     }
 
-    // ─── Shared Action Runner ────────────────────────────────────
-
     /// <summary>
     /// Runs an async action with visual feedback on the card.
     /// Shows spinning state, then success/failure result.
+    /// Security: logs every action with user identity and outcome.
     /// </summary>
     private async Task RunAction(Border card, TextBlock statusLabel,
         string inProgressText, Func<Task<ActionResult>> action)
@@ -222,6 +251,9 @@ public partial class TroubleshootView : UserControl
         // Show "in progress" text
         statusLabel.Text = inProgressText;
         statusLabel.Foreground = (Brush)FindResource("AccentBrush");
+
+        // Security audit: log action initiation
+        _log.Security("Action", $"User initiated: {inProgressText.TrimEnd('.')}");
 
         try
         {
@@ -241,6 +273,13 @@ public partial class TroubleshootView : UserControl
                 ? (Brush)FindResource("SuccessBrush")
                 : (Brush)FindResource("ErrorBrush");
 
+            // Security audit: log action outcome
+            if (result.Success)
+                _log.Security("Action", $"Completed successfully: {inProgressText.TrimEnd('.')}");
+            else
+                _log.Security("Action", $"FAILED: {inProgressText.TrimEnd('.')}",
+                    result.Message);
+
             // Reset border after delay
             _ = Task.Delay(3000).ContinueWith(_ =>
             {
@@ -254,11 +293,12 @@ public partial class TroubleshootView : UserControl
         {
             statusLabel.Text = $"✗ Error: {ex.Message}";
             statusLabel.Foreground = (Brush)FindResource("ErrorBrush");
+            _log.Security("Action", $"EXCEPTION: {inProgressText.TrimEnd('.')}", ex.Message);
         }
         finally
         {
             card.IsEnabled = true;
-            card.Opacity = 1.0;
+            card.Opacity = _isAdmin ? 1.0 : 0.7;
         }
     }
     private async void IntuneSync_Click(object sender, MouseButtonEventArgs e)
