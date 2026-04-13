@@ -642,9 +642,47 @@ public static class TroubleshootService
     {
         _log.Info("Troubleshoot", "Running full network reset...");
 
-        var result = await PowerShellRunner.RunCmdAsync(
-            "ipconfig /flushdns && nbtstat -R && netsh winsock reset && netsh int ip reset",
-            elevated: true, timeoutSeconds: 30);
+        var script = @"
+            $results = @()
+
+            # 1. Flush DNS cache
+            try {
+                $null = ipconfig /flushdns 2>&1
+                $results += 'DNS cache flushed'
+            } catch { $results += 'DNS flush skipped' }
+
+            # 2. Flush NetBIOS cache (non-critical, may fail on non-domain machines)
+            try {
+                $null = nbtstat -R 2>&1
+                $results += 'NetBIOS cache flushed'
+            } catch { $results += 'NetBIOS flush skipped (non-critical)' }
+
+            # 3. Reset Winsock catalog
+            try {
+                $out = netsh winsock reset 2>&1
+                $results += 'Winsock catalog reset'
+            } catch { $results += 'Winsock reset failed' }
+
+            # 4. Reset TCP/IP stack (requires a log file path on some Windows versions)
+            try {
+                $logPath = Join-Path $env:TEMP 'netsh_ip_reset.log'
+                $out = netsh int ip reset $logPath 2>&1
+                $results += 'TCP/IP stack reset'
+            } catch { $results += 'TCP/IP reset failed' }
+
+            # 5. Release and renew IP (non-critical)
+            try {
+                $null = ipconfig /release 2>&1
+                Start-Sleep -Seconds 2
+                $null = ipconfig /renew 2>&1
+                $results += 'IP address renewed'
+            } catch { $results += 'IP renew skipped' }
+
+            Write-Output ($results -join '; ')
+            Write-Output 'Network reset complete. A reboot is recommended.'
+        ";
+
+        var result = await PowerShellRunner.RunAsync(script, elevated: true, timeoutSeconds: 45);
         _log.LogAction("Troubleshoot", "Full Network Reset", result);
         return result;
     }
