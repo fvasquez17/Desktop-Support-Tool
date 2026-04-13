@@ -709,4 +709,61 @@ public static class TroubleshootService
         }
         catch { return 0; }
     }
+    // ─── Microsoft Intune Sync ────────────────────────────────
+
+    /// <summary>
+    /// Forces an immediate Intune policy and app sync by triggering
+    /// the MDM enrollment scheduled tasks and restarting IME.
+    /// </summary>
+    public static async Task<ActionResult> SyncIntuneAsync()
+    {
+        _log.Info("Troubleshoot", "Triggering Microsoft Intune sync...");
+
+        var script = @"
+            try {
+                # 1. Find the MDM enrollment GUID from scheduled tasks
+                $enrollments = Get-ScheduledTask | Where-Object { $_.TaskPath -like '*Microsoft*Windows*EnterpriseMgmt*' -and $_.TaskName -notlike '*client*' }
+
+                if (-not $enrollments -or $enrollments.Count -eq 0) {
+                    Write-Output 'WARNING: No Intune enrollment found on this device.'
+                    exit 1
+                }
+
+                # 2. Trigger all MDM sync scheduled tasks
+                $triggered = 0
+                foreach ($task in $enrollments) {
+                    try {
+                        Start-ScheduledTask -TaskPath $task.TaskPath -TaskName $task.TaskName
+                        $triggered++
+                    } catch { }
+                }
+                Write-Output ""Triggered $triggered MDM scheduled task(s).""
+
+                # 3. Restart Intune Management Extension service
+                $imeSvc = Get-Service -Name 'IntuneManagementExtension' -ErrorAction SilentlyContinue
+                if ($imeSvc) {
+                    Restart-Service -Name 'IntuneManagementExtension' -Force -ErrorAction SilentlyContinue
+                    Write-Output 'Restarted IntuneManagementExtension service.'
+                }
+
+                # 4. Restart Device Management Enrollment Service
+                $dmeSvc = Get-Service -Name 'dmwappushservice' -ErrorAction SilentlyContinue
+                if ($dmeSvc) {
+                    Restart-Service -Name 'dmwappushservice' -Force -ErrorAction SilentlyContinue
+                    Write-Output 'Restarted dmwappushservice.'
+                }
+
+                Write-Output 'Intune sync triggered successfully. Policies and apps will update shortly.'
+            } catch {
+                Write-Output ""Failed: $_""
+                exit 1
+            }
+        ";
+
+        var result = await PowerShellRunner.RunAsync(script, elevated: true, timeoutSeconds: 30);
+
+        return result.Success
+            ? ActionResult.Ok("Intune sync triggered. Policies and apps will update within a few minutes.")
+            : ActionResult.Fail($"Intune sync failed: {result.Output}");
+    }
 }

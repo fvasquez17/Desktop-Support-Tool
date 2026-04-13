@@ -261,4 +261,18 @@ public partial class TroubleshootView : UserControl
             card.Opacity = 1.0;
         }
     }
+    private async void IntuneSync_Click(object sender, MouseButtonEventArgs e)
+    {
+        var answer = MessageBox.Show(
+            "This will force an Intune policy and app sync.\nThis triggers the MDM scheduled tasks and restarts the Intune Management Extension.\n\nRequires administrator privileges. Continue?",
+            "Intune Sync",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (answer == MessageBoxResult.Yes)
+        {
+            await RunAction(CardIntune, StatusIntune, "Syncing with Intune...",
+                () => TroubleshootService.SyncIntuneAsync());
+        }
+    }
 }

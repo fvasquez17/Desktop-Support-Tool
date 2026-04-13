@@ -326,6 +326,23 @@ public static class TroubleshootBot
                          TroubleshootService.RunDismHealthAsync, RequiresConfirmation: true),
                  });
          }),
+
+        // ── Intune / MDM ──
+        (new[] { "intune", "mdm", "enrollment", "compliance", "company portal", "managed" },
+         new[] { "intune not syncing", "intune sync", "force intune", "policy not applying",
+                 "company portal not working", "device not compliant", "enrollment failed" },
+         "Management",
+         (snap) => new Diagnosis("Management", "Intune / MDM Sync Issues",
+             BuildContextualExplanation("Intune policies and apps can take up to 8 hours to check in automatically. " +
+             "Forcing a sync triggers the MDM scheduled tasks and restarts the Intune Management Extension.", snap,
+             snap?.InternetConnected == false ? "🔴 **No internet!** Intune sync requires internet connectivity to reach Microsoft's MDM endpoints." : null),
+             new List<SuggestedAction>
+             {
+                 new("Sync Intune", "Force MDM policy & app sync (triggers scheduled tasks + restarts IME)",
+                     TroubleshootService.SyncIntuneAsync, RequiresConfirmation: true),
+                 new("Run GPUpdate", "Also refresh Group Policy settings",
+                     TroubleshootService.RunGpUpdateAsync),
+             })),
     };
 
     // ═══════════════════════════════════════════════════════════

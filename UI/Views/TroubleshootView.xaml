@@ -355,6 +355,38 @@
                 </Border>
             </WrapPanel>
 
+            <!-- ═══ DEVICE MANAGEMENT ═══ -->
+            <TextBlock Text="DEVICE MANAGEMENT" FontSize="11" FontWeight="Bold"
+                       Foreground="{StaticResource TextTertiaryBrush}" Margin="0,0,0,10"/>
+            <WrapPanel Margin="0,0,0,24">
+
+                <!-- Intune Sync -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardIntune" MouseLeftButtonUp="IntuneSync_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE895;"
+                                   FontSize="28" Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,0,10"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Intune Sync" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontFamily="{StaticResource MainFont}"/>
+                            <Border Background="{StaticResource WarningBrush}" CornerRadius="4"
+                                    Padding="5,1,5,2" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="🛡️ Admin" FontSize="9" FontWeight="Bold"
+                                           Foreground="White" FontFamily="{StaticResource MainFont}"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Force policy &amp; app sync with Intune"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusIntune" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+            </WrapPanel>
+
             <!-- ═══ ADVANCED DIAGNOSTICS ═══ -->
             <TextBlock Text="ADVANCED DIAGNOSTICS" FontSize="11" FontWeight="Bold"
                        Foreground="{StaticResource TextTertiaryBrush}" Margin="0,0,0,10"/>
