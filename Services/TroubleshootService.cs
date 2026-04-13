@@ -1,0 +1,712 @@
+using System.IO;
+using DesktopSupportTool.Helpers;
+using DesktopSupportTool.Models;
+
+namespace DesktopSupportTool.Services;
+
+/// <summary>
+/// All troubleshooting and repair actions. Each method executes a specific fix,
+/// logs the result, and returns an ActionResult with success/failure status.
+/// </summary>
+public static class TroubleshootService
+{
+    private static readonly LoggingService _log = LoggingService.Instance;
+
+    // ─── Cache Resets ────────────────────────────────────────────
+
+    /// <summary>
+    /// Kills Microsoft Teams and deletes its cache directories.
+    /// Works for both classic Teams and new Teams.
+    /// </summary>
+    public static async Task<ActionResult> ResetTeamsCacheAsync()
+    {
+        _log.Info("Troubleshoot", "Resetting Microsoft Teams cache...");
+        try
+        {
+            // Kill Teams processes
+            await ProcessHelper.KillAllAsync("ms-teams");
+            await ProcessHelper.KillAllAsync("Teams");
+            await Task.Delay(1000);
+
+            int deleted = 0;
+
+            // Classic Teams cache
+            var classicPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "Microsoft", "Teams");
+            if (Directory.Exists(classicPath))
+            {
+                var cacheDirs = new[] { "Cache", "blob_storage", "databases", "GPUCache",
+                    "IndexedDB", "Local Storage", "tmp", "Application Cache", "Code Cache" };
+                foreach (var dir in cacheDirs)
+                {
+                    var fullPath = Path.Combine(classicPath, dir);
+                    if (Directory.Exists(fullPath))
+                    {
+                        SafeDeleteDirectory(fullPath);
+                        deleted++;
+                    }
+                }
+            }
+
+            // New Teams cache
+            var newTeamsPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Packages");
+            if (Directory.Exists(newTeamsPath))
+            {
+                var teamsDirs = Directory.GetDirectories(newTeamsPath, "MSTeams*");
+                foreach (var dir in teamsDirs)
+                {
+                    var localCache = Path.Combine(dir, "LocalCache");
+                    if (Directory.Exists(localCache))
+                    {
+                        SafeDeleteDirectory(localCache);
+                        deleted++;
+                    }
+                }
+            }
+
+            var result = ActionResult.Ok($"Teams cache cleared ({deleted} cache directories cleaned). Please relaunch Teams.");
+            _log.LogAction("Troubleshoot", "Reset Teams Cache", result);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            var result = ActionResult.Fail($"Error resetting Teams cache: {ex.Message}");
+            _log.LogAction("Troubleshoot", "Reset Teams Cache", result);
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// Clears Microsoft Office cache and credential manager entries.
+    /// </summary>
+    public static async Task<ActionResult> ResetOfficeCacheAsync()
+    {
+        _log.Info("Troubleshoot", "Resetting Microsoft Office cache...");
+        try
+        {
+            // Kill Office applications
+            var officeApps = new[] { "WINWORD", "EXCEL", "POWERPNT", "OUTLOOK", "ONENOTE", "MSACCESS" };
+            foreach (var app in officeApps)
+            {
+                await ProcessHelper.KillAllAsync(app);
+            }
+            await Task.Delay(1000);
+
+            int deleted = 0;
+
+            // Office cache locations
+            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var cachePaths = new[]
+            {
+                Path.Combine(localAppData, "Microsoft", "Office", "16.0", "OfficeFileCache"),
+                Path.Combine(localAppData, "Microsoft", "Office", "Spw"),
+                Path.Combine(localAppData, "Microsoft", "Office", "OTele"),
+            };
+
+            foreach (var path in cachePaths)
+            {
+                if (Directory.Exists(path))
+                {
+                    SafeDeleteDirectory(path);
+                    deleted++;
+                }
+            }
+
+            // Clear Office identity cache
+            var identityPath = Path.Combine(localAppData, "Microsoft", "OneAuth");
+            if (Directory.Exists(identityPath))
+            {
+                SafeDeleteDirectory(identityPath);
+                deleted++;
+            }
+
+            var result = ActionResult.Ok($"Office cache cleared ({deleted} directories cleaned). Please relaunch Office applications.");
+            _log.LogAction("Troubleshoot", "Reset Office Cache", result);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            var result = ActionResult.Fail($"Error resetting Office cache: {ex.Message}");
+            _log.LogAction("Troubleshoot", "Reset Office Cache", result);
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// Resets Citrix Workspace by killing processes and clearing cache.
+    /// </summary>
+    public static async Task<ActionResult> ResetCitrixAsync()
+    {
+        _log.Info("Troubleshoot", "Resetting Citrix Workspace...");
+        try
+        {
+            // Kill Citrix processes
+            var citrixProcs = new[] { "SelfServicePlugin", "SelfService", "Receiver", "AuthManager",
+                "concentr", "wfcrun32", "redirector", "CDViewer" };
+            foreach (var proc in citrixProcs)
+            {
+                await ProcessHelper.KillAllAsync(proc);
+            }
+            await Task.Delay(1000);
+
+            int deleted = 0;
+
+            // Clear Citrix cache
+            var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            var citrixPaths = new[]
+            {
+                Path.Combine(appData, "ICAClient"),
+                Path.Combine(appData, "Citrix", "SelfService"),
+            };
+
+            foreach (var path in citrixPaths)
+            {
+                if (Directory.Exists(path))
+                {
+                    SafeDeleteDirectory(path);
+                    deleted++;
+                }
+            }
+
+            var result = ActionResult.Ok($"Citrix cache cleared ({deleted} directories cleaned). Please relaunch Citrix Workspace.");
+            _log.LogAction("Troubleshoot", "Reset Citrix", result);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            var result = ActionResult.Fail($"Error resetting Citrix: {ex.Message}");
+            _log.LogAction("Troubleshoot", "Reset Citrix", result);
+            return result;
+        }
+    }
+
+    // ─── System Actions ──────────────────────────────────────────
+
+    /// <summary>
+    /// Runs gpupdate /force to refresh Group Policy.
+    /// </summary>
+    public static async Task<ActionResult> RunGpUpdateAsync()
+    {
+        _log.Info("Troubleshoot", "Running GPUpdate...");
+        var result = await PowerShellRunner.RunCmdAsync("gpupdate /force", timeoutSeconds: 120);
+        _log.LogAction("Troubleshoot", "GPUpdate", result);
+        return result;
+    }
+
+    /// <summary>
+    /// Restarts Windows Explorer (kills and relaunches explorer.exe).
+    /// </summary>
+    public static async Task<ActionResult> RestartExplorerAsync()
+    {
+        _log.Info("Troubleshoot", "Restarting Windows Explorer...");
+        try
+        {
+            await ProcessHelper.KillAllAsync("explorer");
+            await Task.Delay(1500);
+
+            // Relaunch Explorer
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "explorer.exe",
+                UseShellExecute = true
+            });
+
+            var result = ActionResult.Ok("Windows Explorer restarted successfully.");
+            _log.LogAction("Troubleshoot", "Restart Explorer", result);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            var result = ActionResult.Fail($"Error restarting Explorer: {ex.Message}");
+            _log.LogAction("Troubleshoot", "Restart Explorer", result);
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// Clears temporary files from user and system temp directories.
+    /// </summary>
+    public static async Task<ActionResult> ClearTempFilesAsync()
+    {
+        _log.Info("Troubleshoot", "Clearing temporary files...");
+        return await Task.Run(() =>
+        {
+            try
+            {
+                int filesDeleted = 0;
+                long bytesFreed = 0;
+
+                var tempPaths = new[]
+                {
+                    Path.GetTempPath(),
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Temp"),
+                };
+
+                foreach (var tempPath in tempPaths)
+                {
+                    if (!Directory.Exists(tempPath)) continue;
+
+                    foreach (var file in Directory.EnumerateFiles(tempPath, "*", SearchOption.TopDirectoryOnly))
+                    {
+                        try
+                        {
+                            var fi = new FileInfo(file);
+                            bytesFreed += fi.Length;
+                            fi.Delete();
+                            filesDeleted++;
+                        }
+                        catch { /* Skip files in use */ }
+                    }
+
+                    foreach (var dir in Directory.EnumerateDirectories(tempPath))
+                    {
+                        try
+                        {
+                            var di = new DirectoryInfo(dir);
+                            bytesFreed += GetDirectorySize(di);
+                            di.Delete(true);
+                            filesDeleted++;
+                        }
+                        catch { /* Skip dirs in use */ }
+                    }
+                }
+
+                double mbFreed = bytesFreed / (1024.0 * 1024);
+                var result = ActionResult.Ok($"Cleared {filesDeleted} items, freed {mbFreed:F1} MB.");
+                _log.LogAction("Troubleshoot", "Clear Temp Files", result);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                var result = ActionResult.Fail($"Error clearing temp files: {ex.Message}");
+                _log.LogAction("Troubleshoot", "Clear Temp Files", result);
+                return result;
+            }
+        });
+    }
+
+    /// <summary>
+    /// Restarts the Print Spooler service (requires elevation).
+    /// </summary>
+    public static async Task<ActionResult> RestartPrintSpoolerAsync()
+    {
+        _log.Info("Troubleshoot", "Restarting Print Spooler service...");
+        var result = await PowerShellRunner.RunAsync(
+            "Stop-Service Spooler -Force; Start-Sleep -Seconds 2; Start-Service Spooler",
+            elevated: true);
+        _log.LogAction("Troubleshoot", "Restart Print Spooler", result);
+        return result;
+    }
+
+    /// <summary>
+    /// Runs System File Checker (sfc /scannow) — requires elevation, takes several minutes.
+    /// </summary>
+    public static async Task<ActionResult> RunSfcScanAsync()
+    {
+        _log.Info("Troubleshoot", "Starting System File Checker (this may take several minutes)...");
+        var result = await PowerShellRunner.RunCmdAsync("sfc /scannow", elevated: true, timeoutSeconds: 600);
+        _log.LogAction("Troubleshoot", "SFC Scan", result);
+        return result;
+    }
+
+    /// <summary>
+    /// Runs DISM health check and repair — requires elevation.
+    /// </summary>
+    public static async Task<ActionResult> RunDismHealthAsync()
+    {
+        _log.Info("Troubleshoot", "Running DISM health check...");
+        var result = await PowerShellRunner.RunCmdAsync(
+            "DISM /Online /Cleanup-Image /RestoreHealth",
+            elevated: true, timeoutSeconds: 900);
+        _log.LogAction("Troubleshoot", "DISM Health", result);
+        return result;
+    }
+
+    /// <summary>
+    /// Clears browser caches for Chrome, Edge, and Firefox.
+    /// </summary>
+    public static async Task<ActionResult> ClearBrowserCachesAsync()
+    {
+        _log.Info("Troubleshoot", "Clearing browser caches...");
+        try
+        {
+            // Kill browsers first
+            await ProcessHelper.KillAllAsync("chrome");
+            await ProcessHelper.KillAllAsync("msedge");
+            await ProcessHelper.KillAllAsync("firefox");
+            await Task.Delay(1000);
+
+            int deleted = 0;
+            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+
+            // Chrome cache
+            var chromeCache = Path.Combine(localAppData, "Google", "Chrome", "User Data", "Default", "Cache");
+            if (Directory.Exists(chromeCache)) { SafeDeleteDirectory(chromeCache); deleted++; }
+
+            // Edge cache
+            var edgeCache = Path.Combine(localAppData, "Microsoft", "Edge", "User Data", "Default", "Cache");
+            if (Directory.Exists(edgeCache)) { SafeDeleteDirectory(edgeCache); deleted++; }
+
+            // Firefox cache
+            var firefoxProfiles = Path.Combine(localAppData, "Mozilla", "Firefox", "Profiles");
+            if (Directory.Exists(firefoxProfiles))
+            {
+                foreach (var profile in Directory.GetDirectories(firefoxProfiles))
+                {
+                    var cache = Path.Combine(profile, "cache2");
+                    if (Directory.Exists(cache)) { SafeDeleteDirectory(cache); deleted++; }
+                }
+            }
+
+            var result = ActionResult.Ok($"Browser caches cleared ({deleted} directories). Please relaunch browsers.");
+            _log.LogAction("Troubleshoot", "Clear Browser Caches", result);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            var result = ActionResult.Fail($"Error clearing browser caches: {ex.Message}");
+            _log.LogAction("Troubleshoot", "Clear Browser Caches", result);
+            return result;
+        }
+    }
+
+    // ─── Windows Update Fix ───────────────────────────────────────
+
+    /// <summary>
+    /// Resets Windows Update components — stops services, clears caches,
+    /// re-registers DLLs, restarts services. Fixes stuck/failed updates.
+    /// </summary>
+    public static async Task<ActionResult> ResetWindowsUpdateAsync()
+    {
+        _log.Info("Troubleshoot", "Resetting Windows Update components...");
+
+        var script = @"
+            Stop-Service -Name wuauserv, bits, cryptsvc, msiserver -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
+            Remove-Item -Path ""$env:SystemRoot\SoftwareDistribution"" -Recurse -Force -ErrorAction SilentlyContinue
+            Remove-Item -Path ""$env:SystemRoot\System32\catroot2"" -Recurse -Force -ErrorAction SilentlyContinue
+            netsh winsock reset
+            regsvr32 /s wuaueng.dll
+            regsvr32 /s wuaueng1.dll
+            regsvr32 /s wucltui.dll
+            regsvr32 /s wups.dll
+            regsvr32 /s wups2.dll
+            regsvr32 /s wuweb.dll
+            regsvr32 /s atl.dll
+            Start-Service -Name wuauserv, bits, cryptsvc, msiserver -ErrorAction SilentlyContinue
+            'Windows Update components reset successfully. Please restart your computer.'
+        ";
+
+        var result = await PowerShellRunner.RunAsync(script, elevated: true, timeoutSeconds: 60);
+        _log.LogAction("Troubleshoot", "Reset Windows Update", result);
+        return result;
+    }
+
+    // ─── Outlook Profile Repair ──────────────────────────────────
+
+    /// <summary>
+    /// Resets Outlook profile by clearing local cache (OST), 
+    /// killing Outlook, and letting it rebuild on next launch.
+    /// </summary>
+    public static async Task<ActionResult> RepairOutlookAsync()
+    {
+        _log.Info("Troubleshoot", "Repairing Outlook profile...");
+        try
+        {
+            // Kill Outlook
+            await ProcessHelper.KillAllAsync("OUTLOOK");
+            await Task.Delay(1500);
+
+            int cleaned = 0;
+            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var ostPath = Path.Combine(localAppData, "Microsoft", "Outlook");
+
+            if (Directory.Exists(ostPath))
+            {
+                // Delete OST files (cached mailbox — will re-download)
+                foreach (var ost in Directory.GetFiles(ostPath, "*.ost"))
+                {
+                    try { File.Delete(ost); cleaned++; } catch { }
+                }
+                // Delete XML auto-discover cache
+                foreach (var xml in Directory.GetFiles(ostPath, "*.xml"))
+                {
+                    try { File.Delete(xml); cleaned++; } catch { }
+                }
+            }
+
+            // Clear Outlook profile registry (auto-discover) cache
+            var roamingPath = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "Microsoft", "Outlook");
+            if (Directory.Exists(roamingPath))
+            {
+                var autoDCache = Path.Combine(roamingPath, "AutoD");
+                if (Directory.Exists(autoDCache))
+                {
+                    SafeDeleteDirectory(autoDCache);
+                    cleaned++;
+                }
+            }
+
+            var result = ActionResult.Ok(
+                $"Outlook cache repaired ({cleaned} items cleared). Relaunch Outlook — it will re-sync from Exchange.");
+            _log.LogAction("Troubleshoot", "Repair Outlook", result);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            var result = ActionResult.Fail($"Error repairing Outlook: {ex.Message}");
+            _log.LogAction("Troubleshoot", "Repair Outlook", result);
+            return result;
+        }
+    }
+
+    // ─── Credential Manager Clear ────────────────────────────────
+
+    /// <summary>
+    /// Clears Windows Credential Manager entries for Office/Microsoft 365,
+    /// fixing SSO loops, MFA stuck prompts, and "enter password" issues.
+    /// </summary>
+    public static async Task<ActionResult> ClearCredentialManagerAsync()
+    {
+        _log.Info("Troubleshoot", "Clearing Microsoft credential cache...");
+
+        var script = @"
+            $targets = @('MicrosoftOffice*', 'Microsoft_OC*', 'msteams*', 'OneDrive*', 
+                         '*office*', '*sharepoint*', '*outlook*', '*login.microsoftonline*')
+            $removed = 0
+            foreach ($pattern in $targets) {
+                $creds = cmdkey /list 2>&1 | Select-String -Pattern $pattern.Replace('*','')
+                foreach ($c in $creds) {
+                    $line = $c.Line.Trim()
+                    if ($line -match 'Target:\s*(.+)') {
+                        cmdkey /delete:$($Matches[1]) 2>&1 | Out-Null
+                        $removed++
+                    }
+                }
+            }
+            ""Cleared $removed cached credentials. Re-sign into Office/Teams when prompted.""
+        ";
+
+        var result = await PowerShellRunner.RunAsync(script, timeoutSeconds: 15);
+        _log.LogAction("Troubleshoot", "Clear Credential Manager", result);
+        return result;
+    }
+
+    // ─── OneDrive Sync Repair ────────────────────────────────────
+
+    /// <summary>
+    /// Resets OneDrive client — kills the process and runs the built-in
+    /// /reset command which clears sync state and re-initializes.
+    /// </summary>
+    public static async Task<ActionResult> RepairOneDriveSyncAsync()
+    {
+        _log.Info("Troubleshoot", "Repairing OneDrive sync...");
+        try
+        {
+            await ProcessHelper.KillAllAsync("OneDrive");
+            await Task.Delay(1000);
+
+            // OneDrive /reset clears all sync partnerships and re-initializes
+            var resetPaths = new[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "Microsoft", "OneDrive", "OneDrive.exe"),
+                @"C:\Program Files\Microsoft OneDrive\OneDrive.exe",
+                @"C:\Program Files (x86)\Microsoft OneDrive\OneDrive.exe"
+            };
+
+            string? exePath = resetPaths.FirstOrDefault(File.Exists);
+
+            if (exePath != null)
+            {
+                var result = await PowerShellRunner.RunCmdAsync(
+                    $"\"{exePath}\" /reset", timeoutSeconds: 30);
+
+                // Wait for OneDrive to restart automatically (it relaunches after reset)
+                await Task.Delay(5000);
+
+                var finalResult = ActionResult.Ok(
+                    "OneDrive sync reset complete. It will restart and re-sync automatically. " +
+                    "Sign in again if prompted.");
+                _log.LogAction("Troubleshoot", "Repair OneDrive", finalResult);
+                return finalResult;
+            }
+            else
+            {
+                var result = ActionResult.Fail("OneDrive executable not found.");
+                _log.LogAction("Troubleshoot", "Repair OneDrive", result);
+                return result;
+            }
+        }
+        catch (Exception ex)
+        {
+            var result = ActionResult.Fail($"Error repairing OneDrive: {ex.Message}");
+            _log.LogAction("Troubleshoot", "Repair OneDrive", result);
+            return result;
+        }
+    }
+
+    // ─── Icon Cache Rebuild ──────────────────────────────────────
+
+    /// <summary>
+    /// Rebuilds the Windows icon cache — fixes blank/wrong icons on 
+    /// desktop, taskbar, and Start menu.
+    /// </summary>
+    public static async Task<ActionResult> RebuildIconCacheAsync()
+    {
+        _log.Info("Troubleshoot", "Rebuilding icon cache...");
+        try
+        {
+            // Kill Explorer to release icon cache files
+            await ProcessHelper.KillAllAsync("explorer");
+            await Task.Delay(1500);
+
+            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            int deleted = 0;
+
+            // Delete icon cache files
+            var cacheFiles = Directory.GetFiles(localAppData, "iconcache*", SearchOption.TopDirectoryOnly);
+            foreach (var file in cacheFiles)
+            {
+                try { File.Delete(file); deleted++; } catch { }
+            }
+
+            // Delete thumbcache files
+            var thumbPath = Path.Combine(localAppData, "Microsoft", "Windows", "Explorer");
+            if (Directory.Exists(thumbPath))
+            {
+                foreach (var file in Directory.GetFiles(thumbPath, "thumbcache*"))
+                {
+                    try { File.Delete(file); deleted++; } catch { }
+                }
+                foreach (var file in Directory.GetFiles(thumbPath, "iconcache*"))
+                {
+                    try { File.Delete(file); deleted++; } catch { }
+                }
+            }
+
+            // Restart Explorer
+            await Task.Delay(1000);
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "explorer.exe",
+                UseShellExecute = true
+            });
+
+            var result = ActionResult.Ok($"Icon cache rebuilt ({deleted} cache files cleared). Icons will regenerate.");
+            _log.LogAction("Troubleshoot", "Rebuild Icon Cache", result);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            var result = ActionResult.Fail($"Error rebuilding icon cache: {ex.Message}");
+            _log.LogAction("Troubleshoot", "Rebuild Icon Cache", result);
+            return result;
+        }
+    }
+
+    // ─── Re-register Start Menu / Shell ──────────────────────────
+
+    /// <summary>
+    /// Re-registers all built-in Windows apps and Start Menu shell.
+    /// Fixes Start menu not opening, broken search, missing apps.
+    /// </summary>
+    public static async Task<ActionResult> ReRegisterStartMenuAsync()
+    {
+        _log.Info("Troubleshoot", "Re-registering Start Menu and shell apps...");
+
+        var script = @"
+            Get-AppxPackage -AllUsers | Where-Object {$_.InstallLocation -like '*SystemApps*' -or $_.Name -like '*ShellExperienceHost*' -or $_.Name -like '*StartMenuExperienceHost*' -or $_.Name -like '*Search*'} | ForEach-Object {
+                Add-AppxPackage -DisableDevelopmentMode -Register ""$($_.InstallLocation)\AppXManifest.xml"" -ErrorAction SilentlyContinue
+            }
+            'Start Menu and shell components re-registered successfully.'
+        ";
+
+        var result = await PowerShellRunner.RunAsync(script, elevated: true, timeoutSeconds: 120);
+        _log.LogAction("Troubleshoot", "Re-register Start Menu", result);
+        return result;
+    }
+
+    // ─── Network Reset (Winsock + TCP/IP) ────────────────────────
+
+    /// <summary>
+    /// Full network reset — Winsock, TCP/IP, firewall rules reset,
+    /// flushes DNS. Fixes "connected but no internet" and proxy issues.
+    /// </summary>
+    public static async Task<ActionResult> FullNetworkResetAsync()
+    {
+        _log.Info("Troubleshoot", "Running full network reset...");
+
+        var result = await PowerShellRunner.RunCmdAsync(
+            "ipconfig /flushdns && nbtstat -R && netsh winsock reset && netsh int ip reset",
+            elevated: true, timeoutSeconds: 30);
+        _log.LogAction("Troubleshoot", "Full Network Reset", result);
+        return result;
+    }
+
+    // ─── Clear Print Queue ───────────────────────────────────────
+
+    /// <summary>
+    /// Stops Print Spooler, clears ALL stuck print jobs from the spool directory,
+    /// then restarts the Spooler. Fixes "document stuck in queue" issues.
+    /// </summary>
+    public static async Task<ActionResult> ClearPrintQueueAsync()
+    {
+        _log.Info("Troubleshoot", "Clearing all stuck print jobs...");
+
+        var script = @"
+            Stop-Service -Name Spooler -Force -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 2
+            Remove-Item -Path ""$env:SystemRoot\System32\spool\PRINTERS\*"" -Force -ErrorAction SilentlyContinue
+            Start-Service -Name Spooler
+            'Print queue cleared and Spooler restarted.'
+        ";
+
+        var result = await PowerShellRunner.RunAsync(script, elevated: true, timeoutSeconds: 20);
+        _log.LogAction("Troubleshoot", "Clear Print Queue", result);
+        return result;
+    }
+
+    // ─── Quick Launch Helpers ────────────────────────────────────
+
+    /// <summary>Launches Remote Desktop Connection.</summary>
+    public static void LaunchRdp() => ProcessHelper.Launch("mstsc.exe");
+
+    /// <summary>Launches Quick Assist.</summary>
+    public static void LaunchQuickAssist() => ProcessHelper.Launch("quickassist.exe");
+
+    /// <summary>Launches Microsoft Remote Assistance.</summary>
+    public static void LaunchRemoteAssistance() => ProcessHelper.Launch("msra.exe");
+
+    // ─── Utilities ───────────────────────────────────────────────
+
+    private static void SafeDeleteDirectory(string path)
+    {
+        try
+        {
+            foreach (var file in Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories))
+            {
+                try { File.Delete(file); } catch { }
+            }
+            foreach (var dir in Directory.EnumerateDirectories(path, "*", SearchOption.AllDirectories).Reverse())
+            {
+                try { Directory.Delete(dir, false); } catch { }
+            }
+        }
+        catch { }
+    }
+
+    private static long GetDirectorySize(DirectoryInfo dir)
+    {
+        try
+        {
+            return dir.EnumerateFiles("*", SearchOption.AllDirectories).Sum(f => f.Length);
+        }
+        catch { return 0; }
+    }
+}

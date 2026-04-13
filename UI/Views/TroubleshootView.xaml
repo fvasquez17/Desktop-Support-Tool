@@ -1,0 +1,416 @@
+<UserControl x:Class="DesktopSupportTool.UI.Views.TroubleshootView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{StaticResource BgBrush}">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="28,24">
+        <StackPanel>
+
+            <!-- Header -->
+            <TextBlock Text="Troubleshooting" FontSize="26" FontWeight="Bold"
+                       Foreground="{StaticResource TextPrimaryBrush}"
+                       FontFamily="{StaticResource MainFont}"/>
+            <TextBlock Text="One-click fixes for common issues"
+                       FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
+                       FontFamily="{StaticResource MainFont}" Margin="0,4,0,24"/>
+
+            <!-- ═══ APPLICATION RESETS ═══ -->
+            <TextBlock Text="APPLICATION RESETS" FontSize="11" FontWeight="Bold"
+                       Foreground="{StaticResource TextTertiaryBrush}" Margin="0,0,0,10"/>
+            <WrapPanel Margin="0,0,0,24">
+
+                <!-- Reset Teams Cache -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardTeams" MouseLeftButtonUp="ResetTeams_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE8F2;"
+                                   FontSize="28" Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,0,10"/>
+                        <TextBlock Text="Reset Teams" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock Text="Clear Teams cache and data"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusTeams" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Reset Office Cache -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardOffice" MouseLeftButtonUp="ResetOffice_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xEBE8;"
+                                   FontSize="28" Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,0,10"/>
+                        <TextBlock Text="Reset Office" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock Text="Clear Office cache files"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusOffice" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Reset Citrix -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardCitrix" MouseLeftButtonUp="ResetCitrix_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE8A5;"
+                                   FontSize="28" Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,0,10"/>
+                        <TextBlock Text="Reset Citrix" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock Text="Clear Citrix Workspace cache"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusCitrix" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Repair Outlook -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardOutlook" MouseLeftButtonUp="RepairOutlook_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE715;"
+                                   FontSize="28" Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,0,10"/>
+                        <TextBlock Text="Repair Outlook" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock Text="Delete OST cache, force re-sync"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusOutlook" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Repair OneDrive -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardOneDrive" MouseLeftButtonUp="RepairOneDrive_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE753;"
+                                   FontSize="28" Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,0,10"/>
+                        <TextBlock Text="Repair OneDrive" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock Text="Reset OneDrive sync client"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusOneDrive" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Clear Browser Caches -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardBrowser" MouseLeftButtonUp="ClearBrowserCaches_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE774;"
+                                   FontSize="28" Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,0,10"/>
+                        <TextBlock Text="Clear Browsers" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock Text="Clear Chrome, Edge, Firefox cache"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusBrowser" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Clear Credential Manager -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardCreds" MouseLeftButtonUp="ClearCredentials_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE8D7;"
+                                   FontSize="28" Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,0,10"/>
+                        <TextBlock Text="Clear Credentials" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock Text="Fix SSO/MFA loops, password prompts"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusCreds" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+            </WrapPanel>
+
+            <!-- ═══ SYSTEM ACTIONS ═══ -->
+            <TextBlock Text="SYSTEM ACTIONS" FontSize="11" FontWeight="Bold"
+                       Foreground="{StaticResource TextTertiaryBrush}" Margin="0,0,0,10"/>
+            <WrapPanel Margin="0,0,0,24">
+
+                <!-- GPUpdate -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardGpu" MouseLeftButtonUp="GpUpdate_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE895;"
+                                   FontSize="28" Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,0,10"/>
+                        <TextBlock Text="GPUpdate" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock Text="Force Group Policy refresh"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusGpu" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Restart Explorer -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardExplorer" MouseLeftButtonUp="RestartExplorer_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xEC50;"
+                                   FontSize="28" Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,0,10"/>
+                        <TextBlock Text="Restart Explorer" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock Text="Kill and restart explorer.exe"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusExplorer" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Clear Temp Files -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardTemp" MouseLeftButtonUp="ClearTemp_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE74D;"
+                                   FontSize="28" Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,0,10"/>
+                        <TextBlock Text="Clear Temp Files" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock Text="Delete temporary files and folders"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusTemp" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Rebuild Icon Cache -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardIcons" MouseLeftButtonUp="RebuildIcons_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE8B9;"
+                                   FontSize="28" Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,0,10"/>
+                        <TextBlock Text="Rebuild Icons" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock Text="Fix blank/wrong desktop icons"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusIcons" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Re-register Start Menu -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardStartMenu" MouseLeftButtonUp="FixStartMenu_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE80F;"
+                                   FontSize="28" Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,0,10"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Fix Start Menu" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontFamily="{StaticResource MainFont}"/>
+                            <Border Background="{StaticResource WarningBrush}" CornerRadius="4"
+                                    Padding="5,1,5,2" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="🛡️ Admin" FontSize="9" FontWeight="Bold"
+                                           Foreground="White" FontFamily="{StaticResource MainFont}"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Re-register Start Menu &amp; Search"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusStartMenu" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+            </WrapPanel>
+
+            <!-- ═══ NETWORK & PRINTING ═══ -->
+            <TextBlock Text="NETWORK &amp; PRINTING" FontSize="11" FontWeight="Bold"
+                       Foreground="{StaticResource TextTertiaryBrush}" Margin="0,0,0,10"/>
+            <WrapPanel Margin="0,0,0,24">
+
+                <!-- Restart Print Spooler -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardPrint" MouseLeftButtonUp="RestartSpooler_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE7F6;"
+                                   FontSize="28" Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,0,10"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Restart Spooler" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontFamily="{StaticResource MainFont}"/>
+                            <Border Background="{StaticResource WarningBrush}" CornerRadius="4"
+                                    Padding="5,1,5,2" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="🛡️ Admin" FontSize="9" FontWeight="Bold"
+                                           Foreground="White" FontFamily="{StaticResource MainFont}"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Restart the Print Spooler service"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusPrint" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Clear Print Queue -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardQueue" MouseLeftButtonUp="ClearPrintQueue_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE749;"
+                                   FontSize="28" Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,0,10"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Clear Print Queue" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontFamily="{StaticResource MainFont}"/>
+                            <Border Background="{StaticResource WarningBrush}" CornerRadius="4"
+                                    Padding="5,1,5,2" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="🛡️ Admin" FontSize="9" FontWeight="Bold"
+                                           Foreground="White" FontFamily="{StaticResource MainFont}"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Remove all stuck print jobs"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusQueue" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Full Network Reset -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardNetReset" MouseLeftButtonUp="FullNetworkReset_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE968;"
+                                   FontSize="28" Foreground="{StaticResource WarningBrush}"
+                                   Margin="0,0,0,10"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Full Network Reset" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontFamily="{StaticResource MainFont}"/>
+                            <Border Background="{StaticResource WarningBrush}" CornerRadius="4"
+                                    Padding="5,1,5,2" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="🛡️ Admin" FontSize="9" FontWeight="Bold"
+                                           Foreground="White" FontFamily="{StaticResource MainFont}"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Winsock + TCP/IP + DNS flush"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusNetReset" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Reset Windows Update -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardWinUpdate" MouseLeftButtonUp="ResetWindowsUpdate_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE895;"
+                                   FontSize="28" Foreground="{StaticResource WarningBrush}"
+                                   Margin="0,0,0,10"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Reset Win Update" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontFamily="{StaticResource MainFont}"/>
+                            <Border Background="{StaticResource WarningBrush}" CornerRadius="4"
+                                    Padding="5,1,5,2" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="🛡️ Admin" FontSize="9" FontWeight="Bold"
+                                           Foreground="White" FontFamily="{StaticResource MainFont}"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Fix stuck/failed Windows Updates"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusWinUpdate" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+            </WrapPanel>
+
+            <!-- ═══ ADVANCED DIAGNOSTICS ═══ -->
+            <TextBlock Text="ADVANCED DIAGNOSTICS" FontSize="11" FontWeight="Bold"
+                       Foreground="{StaticResource TextTertiaryBrush}" Margin="0,0,0,10"/>
+            <WrapPanel Margin="0,0,0,24">
+
+                <!-- SFC Scan -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardSfc" MouseLeftButtonUp="SfcScan_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE9D5;"
+                                   FontSize="28" Foreground="{StaticResource WarningBrush}"
+                                   Margin="0,0,0,10"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="SFC Scan" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontFamily="{StaticResource MainFont}"/>
+                            <Border Background="{StaticResource WarningBrush}" CornerRadius="4"
+                                    Padding="5,1,5,2" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="🛡️ Admin" FontSize="9" FontWeight="Bold"
+                                           Foreground="White" FontFamily="{StaticResource MainFont}"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="System File Checker (slow)"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusSfc" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- DISM Health -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardDism" MouseLeftButtonUp="DismHealth_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE90F;"
+                                   FontSize="28" Foreground="{StaticResource WarningBrush}"
+                                   Margin="0,0,0,10"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="DISM Repair" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontFamily="{StaticResource MainFont}"/>
+                            <Border Background="{StaticResource WarningBrush}" CornerRadius="4"
+                                    Padding="5,1,5,2" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="🛡️ Admin" FontSize="9" FontWeight="Bold"
+                                           Foreground="White" FontFamily="{StaticResource MainFont}"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="DISM RestoreHealth (slow)"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusDism" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+            </WrapPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

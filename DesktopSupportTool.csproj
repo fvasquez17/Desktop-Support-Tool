@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <RootNamespace>DesktopSupportTool</RootNamespace>
+    <AssemblyName>DesktopSupportTool</AssemblyName>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Version>1.0.0</Version>
+    <Description>Enterprise Desktop Support Tool for system diagnostics and troubleshooting</Description>
+    <Company>IT Department</Company>
+    <Product>Desktop Support Tool</Product>
+    <Authors>IT Department</Authors>
+    <Copyright>Copyright © 2025 IT Department</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Management" Version="9.0.0" />
+  </ItemGroup>
+
+</Project>

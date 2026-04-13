@@ -1,0 +1,206 @@
+<UserControl x:Class="DesktopSupportTool.UI.Views.PeripheralsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{StaticResource BgBrush}">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="28,24">
+        <StackPanel>
+
+            <!-- Header -->
+            <Grid Margin="0,0,0,24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="Peripherals &amp; Settings" FontSize="26" FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}"
+                               FontFamily="{StaticResource MainFont}"/>
+                    <TextBlock Text="Manage displays, audio devices, and printers"
+                               FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"
+                               FontFamily="{StaticResource MainFont}" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Button Grid.Column="1" Style="{StaticResource SecondaryButton}" Click="Refresh_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE72C;"
+                                   FontSize="13" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Refresh All"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!-- ═══════════════════════════════════════════════════
+                 DISPLAYS
+                 ═══════════════════════════════════════════════════ -->
+            <TextBlock Text="DISPLAYS" FontSize="11" FontWeight="Bold"
+                       Foreground="{StaticResource TextTertiaryBrush}" Margin="0,0,0,8"/>
+            <StackPanel x:Name="MonitorList" Margin="0,0,0,12"/>
+            <Button Style="{StaticResource SecondaryButton}" Click="OpenDisplaySettings_Click"
+                    HorizontalAlignment="Left" Margin="0,0,0,28">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE713;"
+                               FontSize="13" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="Windows Display Settings"/>
+                </StackPanel>
+            </Button>
+
+            <!-- ═══════════════════════════════════════════════════
+                 AUDIO OUTPUT
+                 ═══════════════════════════════════════════════════ -->
+            <TextBlock Text="AUDIO OUTPUT" FontSize="11" FontWeight="Bold"
+                       Foreground="{StaticResource TextTertiaryBrush}" Margin="0,0,0,8"/>
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE767;"
+                                   FontSize="18" Foreground="{StaticResource AccentBrush}"
+                                   VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <TextBlock Text="Playback Device" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Device Selector -->
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox x:Name="CmbAudioOutput" Width="Auto" Margin="0,0,10,0"
+                                  SelectionChanged="AudioOutput_Changed"/>
+                        <Button Grid.Column="1" Style="{StaticResource PrimaryButton}"
+                                Click="SetDefaultPlayback_Click" x:Name="BtnSetPlayback" Padding="14,8">
+                            <TextBlock Text="Set as Default" FontSize="12"/>
+                        </Button>
+                    </Grid>
+
+                    <!-- Volume Control -->
+                    <StackPanel Margin="0,0,0,4">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="Volume:" FontSize="12"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock x:Name="TxtOutputVolume" Text="—%" FontSize="13"
+                                       FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <Button Style="{StaticResource SecondaryButton}" Click="ToggleOutputMute_Click"
+                                    x:Name="BtnOutputMute" Padding="8,4">
+                                <TextBlock x:Name="TxtOutputMuteIcon" FontFamily="{StaticResource IconFont}"
+                                           Text="&#xE767;" FontSize="14"/>
+                            </Button>
+                        </StackPanel>
+                        <Slider x:Name="SliderOutputVolume" Minimum="0" Maximum="100"
+                                ValueChanged="OutputVolume_Changed" TickFrequency="5"
+                                IsSnapToTickEnabled="False" Margin="0,0,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- ═══════════════════════════════════════════════════
+                 MICROPHONE INPUT
+                 ═══════════════════════════════════════════════════ -->
+            <TextBlock Text="MICROPHONE INPUT" FontSize="11" FontWeight="Bold"
+                       Foreground="{StaticResource TextTertiaryBrush}" Margin="0,0,0,8"/>
+            <Border Style="{StaticResource Card}" Margin="0,0,0,16">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE720;"
+                                   FontSize="18" Foreground="{StaticResource AccentBrush}"
+                                   VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <TextBlock Text="Recording Device" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Device Selector -->
+                    <Grid Margin="0,0,0,14">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox x:Name="CmbAudioInput" Width="Auto" Margin="0,0,10,0"
+                                  SelectionChanged="AudioInput_Changed"/>
+                        <Button Grid.Column="1" Style="{StaticResource PrimaryButton}"
+                                Click="SetDefaultRecording_Click" x:Name="BtnSetRecording" Padding="14,8">
+                            <TextBlock Text="Set as Default" FontSize="12"/>
+                        </Button>
+                    </Grid>
+
+                    <!-- Volume Control -->
+                    <StackPanel Margin="0,0,0,4">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="Volume:" FontSize="12"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock x:Name="TxtInputVolume" Text="—%" FontSize="13"
+                                       FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"
+                                       VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <Button Style="{StaticResource SecondaryButton}" Click="ToggleInputMute_Click"
+                                    x:Name="BtnInputMute" Padding="8,4">
+                                <TextBlock x:Name="TxtInputMuteIcon" FontFamily="{StaticResource IconFont}"
+                                           Text="&#xE720;" FontSize="14"/>
+                            </Button>
+                        </StackPanel>
+                        <Slider x:Name="SliderInputVolume" Minimum="0" Maximum="100"
+                                ValueChanged="InputVolume_Changed" TickFrequency="5"
+                                IsSnapToTickEnabled="False"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Sound Settings + Restart Audio -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,28">
+                <Button Style="{StaticResource SecondaryButton}" Click="OpenSoundSettings_Click"
+                        Margin="0,0,8,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE713;"
+                                   FontSize="13" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Sound Settings"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource PrimaryButton}" Click="RestartAudio_Click"
+                        x:Name="BtnRestartAudio">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE72C;"
+                                   FontSize="13" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Restart Audio Service"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+            <!-- ═══════════════════════════════════════════════════
+                 PRINTERS
+                 ═══════════════════════════════════════════════════ -->
+            <TextBlock Text="PRINTERS" FontSize="11" FontWeight="Bold"
+                       Foreground="{StaticResource TextTertiaryBrush}" Margin="0,0,0,8"/>
+
+            <!-- Add Printer + Printer Settings -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                <Button Style="{StaticResource PrimaryButton}" Click="AddPrinter_Click"
+                        Margin="0,0,8,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE710;"
+                                   FontSize="13" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Add Printer"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource SecondaryButton}" Click="OpenPrinterSettings_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE713;"
+                                   FontSize="13" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBlock Text="Windows Printer Settings"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+            <!-- Printer List -->
+            <StackPanel x:Name="PrinterList" Margin="0,0,0,12"/>
+
+            <!-- Status Feedback -->
+            <Border x:Name="StatusBanner" Style="{StaticResource Card}" Visibility="Collapsed"
+                    Margin="0,20,0,0">
+                <TextBlock x:Name="StatusText" FontSize="13" TextWrapping="Wrap"
+                           Foreground="{StaticResource TextPrimaryBrush}"/>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

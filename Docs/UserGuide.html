@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desktop Support Tool — User Guide</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+        :root {
+            --accent: #3B82F6;
+            --accent-light: #DBEAFE;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --bg: #FFFFFF;
+            --surface: #F8FAFC;
+            --border: #E2E8F0;
+            --text: #1E293B;
+            --text-secondary: #475569;
+            --text-muted: #94A3B8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text);
+            line-height: 1.7;
+            background: var(--bg);
+            font-size: 10.5pt;
+        }
+
+        @page {
+            margin: 0.75in;
+            size: letter;
+        }
+
+        @media print {
+            body { font-size: 9.5pt; }
+            .cover-page { page-break-after: always; }
+            .toc { page-break-after: always; }
+            h2 { page-break-before: always; }
+            h2:first-of-type { page-break-before: avoid; }
+            .no-break { page-break-inside: avoid; }
+            .note, .tip, .important, .warning { page-break-inside: avoid; }
+            table { page-break-inside: avoid; }
+        }
+
+        /* ─── Cover Page ─── */
+        .cover-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .cover-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2rem;
+            box-shadow: 0 20px 40px rgba(59, 130, 246, 0.25);
+        }
+
+        .cover-icon span {
+            font-size: 48px;
+            color: white;
+        }
+
+        .cover-page h1 {
+            font-size: 36pt;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .cover-subtitle {
+            font-size: 16pt;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 2rem;
+        }
+
+        .cover-meta {
+            font-size: 11pt;
+            color: var(--text-muted);
+            line-height: 2;
+        }
+
+        .cover-badge {
+            display: inline-block;
+            background: var(--accent-light);
+            color: var(--accent);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 10pt;
+            font-weight: 600;
+            margin: 0 4px;
+        }
+
+        /* ─── TOC ─── */
+        .toc {
+            padding: 2rem 0;
+        }
+
+        .toc h2 {
+            page-break-before: avoid !important;
+            font-size: 20pt;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+            border: none;
+            padding: 0;
+        }
+
+        .toc-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 8px 0;
+            border-bottom: 1px dotted var(--border);
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .toc-item:hover { color: var(--accent); }
+
+        .toc-section {
+            font-size: 8pt;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 1.2rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .toc-emoji { margin-right: 8px; }
+
+        /* ─── Content ─── */
+        .content { max-width: 100%; }
+
+        h2 {
+            font-size: 22pt;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid var(--accent);
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 14pt;
+            font-weight: 700;
+            color: var(--text);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        h4 {
+            font-size: 11pt;
+            font-weight: 700;
+            color: var(--accent);
+            margin-top: 1.2rem;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        p {
+            margin-bottom: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        strong { color: var(--text); }
+
+        /* ─── Tables ─── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 9.5pt;
+        }
+
+        thead th {
+            background: var(--accent);
+            color: white;
+            padding: 8px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        thead th:first-child { border-radius: 6px 0 0 0; }
+        thead th:last-child { border-radius: 0 6px 0 0; }
+
+        tbody td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        tbody tr:nth-child(even) { background: var(--surface); }
+        tbody tr:hover { background: var(--accent-light); }
+
+        /* ─── Lists ─── */
+        ul, ol {
+            margin: 0.5rem 0 1rem 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        li { margin-bottom: 0.3rem; }
+
+        /* ─── Callouts ─── */
+        .note, .tip, .important, .warning {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-size: 9.5pt;
+            border-left: 4px solid;
+        }
+
+        .note {
+            background: #EFF6FF;
+            border-color: var(--accent);
+            color: #1E40AF;
+        }
+
+        .tip {
+            background: #F0FDF4;
+            border-color: var(--success);
+            color: #166534;
+        }
+
+        .important {
+            background: #FFF7ED;
+            border-color: var(--warning);
+            color: #9A3412;
+        }
+
+        .warning {
+            background: #FEF2F2;
+            border-color: var(--error);
+            color: #991B1B;
+        }
+
+        .callout-label {
+            font-weight: 700;
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* ─── Code ─── */
+        code {
+            background: var(--surface);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 9pt;
+            color: var(--accent);
+            border: 1px solid var(--border);
+        }
+
+        /* ─── Section Intro ─── */
+        .section-intro {
+            font-size: 11pt;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            padding-left: 1rem;
+            border-left: 3px solid var(--accent-light);
+        }
+
+        /* ─── Feature Card Grid ─── */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 1rem 0;
+        }
+
+        .feature-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .feature-card h5 {
+            font-size: 10pt;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--text);
+        }
+
+        .feature-card p {
+            font-size: 9pt;
+            margin: 0;
+            color: var(--text-muted);
+        }
+
+        .admin-badge {
+            display: inline-block;
+            background: var(--warning);
+            color: white;
+            padding: 1px 8px;
+            border-radius: 4px;
+            font-size: 8pt;
+            font-weight: 700;
+            vertical-align: middle;
+        }
+
+        /* ─── Footer ─── */
+        .page-footer {
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 8.5pt;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  COVER PAGE                                    -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="cover-page">
+    <div class="cover-icon"><span>🛠️</span></div>
+    <h1>Desktop Support Tool</h1>
+    <div class="cover-subtitle">User Guide</div>
+    <p class="cover-meta">
+        <span class="cover-badge">Version 1.0.0</span>
+        <span class="cover-badge">.NET 9.0</span>
+        <span class="cover-badge">Windows 10/11</span>
+        <br><br>
+        Enterprise-grade system diagnostics, AI-powered troubleshooting,<br>
+        and one-click fixes for common Windows issues.
+        <br><br>
+        IT Department · April 2026
+    </p>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  TABLE OF CONTENTS                             -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="toc">
+    <h2>Table of Contents</h2>
+
+    <div class="toc-section">Getting Started</div>
+    <div class="toc-item"><span><span class="toc-emoji">🚀</span> Getting Started</span></div>
+
+    <div class="toc-section">Sections</div>
+    <div class="toc-item"><span><span class="toc-emoji">🤖</span> IT Support Agent</span></div>
+    <div class="toc-item"><span><span class="toc-emoji">📊</span> Dashboard</span></div>
+    <div class="toc-item"><span><span class="toc-emoji">💻</span> System Info</span></div>
+    <div class="toc-item"><span><span class="toc-emoji">🌐</span> Network</span></div>
+    <div class="toc-item"><span><span class="toc-emoji">🖨️</span> Peripherals</span></div>
+    <div class="toc-item"><span><span class="toc-emoji">🔍</span> Drivers</span></div>
+    <div class="toc-item"><span><span class="toc-emoji">⚙️</span> Services</span></div>
+    <div class="toc-item"><span><span class="toc-emoji">🔧</span> Troubleshooting</span></div>
+    <div class="toc-item"><span><span class="toc-emoji">📝</span> Activity Log</span></div>
+
+    <div class="toc-section">Reference</div>
+    <div class="toc-item"><span><span class="toc-emoji">💡</span> Tips & Tricks</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  GETTING STARTED                               -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="content">
+
+<h2>🚀 Getting Started</h2>
+<p class="section-intro">The Desktop Support Tool is a lightweight system tray application that gives IT professionals and end users instant access to system diagnostics, network information, peripheral management, and one-click fixes for common Windows issues.</p>
+
+<h3>Launching the App</h3>
+<p>The tool starts <strong>minimized to the system tray</strong> (notification area near the clock). It does not open a window on launch.</p>
+
+<ul>
+    <li><strong>Single-click</strong> the tray icon → Opens the main window</li>
+    <li><strong>Right-click</strong> the tray icon → Context menu with quick navigation</li>
+    <li><strong>Close (✕)</strong> the window → Minimizes back to tray (does <em>not</em> exit)</li>
+    <li>To fully exit → Right-click tray icon → <strong>Exit</strong></li>
+</ul>
+
+<h3>Window Controls</h3>
+<table>
+    <thead><tr><th>Button</th><th>Action</th></tr></thead>
+    <tbody>
+        <tr><td><strong>— (Minimize)</strong></td><td>Minimize to taskbar</td></tr>
+        <tr><td><strong>□ (Maximize)</strong></td><td>Toggle fullscreen / windowed (respects taskbar)</td></tr>
+        <tr><td><strong>✕ (Close)</strong></td><td>Hide to system tray — app keeps running in background</td></tr>
+    </tbody>
+</table>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  IT SUPPORT AGENT                              -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2>🤖 IT Support Agent</h2>
+<p class="section-intro">The built-in AI Support Agent is your first stop for troubleshooting. Describe your problem in plain English and the agent will diagnose, scan your system, and offer one-click fixes — all without any internet connection.</p>
+
+<h3>How to Use</h3>
+<ol>
+    <li>Click <strong>"IT Support Agent"</strong> in the sidebar (top item under SUPPORT)</li>
+    <li>Type your problem in the text box, for example:
+        <ul>
+            <li><em>"Outlook keeps crashing"</em></li>
+            <li><em>"I can't print anything"</em></li>
+            <li><em>"My computer is really slow"</em></li>
+            <li><em>"No internet connection"</em></li>
+        </ul>
+    </li>
+    <li>The agent scans your system and shows a <strong>health bar</strong> with live metrics</li>
+    <li>Click any <strong>▶ fix button</strong> to execute a recommended repair</li>
+    <li>Use <strong>quick reply chips</strong> (blue pill buttons) for follow-up actions</li>
+</ol>
+
+<h3>System Health Scan</h3>
+<p>Click the <strong>"Scan System"</strong> button — or type <em>"scan my system"</em> — to run a full health check without describing any problem.</p>
+
+<table>
+    <thead><tr><th>Metric</th><th>What It Checks</th><th>Alert Levels</th></tr></thead>
+    <tbody>
+        <tr><td><strong>CPU</strong></td><td>Processor usage percentage</td><td>⚠️ &gt;70% · 🔴 &gt;90%</td></tr>
+        <tr><td><strong>RAM</strong></td><td>Memory usage percentage</td><td>⚠️ &gt;70% · 🔴 &gt;85%</td></tr>
+        <tr><td><strong>Disk</strong></td><td>System drive free space</td><td>⚠️ &gt;75% full · 🔴 &gt;90%</td></tr>
+        <tr><td><strong>Internet</strong></td><td>Ping to 8.8.8.8</td><td>🔴 if unreachable</td></tr>
+        <tr><td><strong>DNS</strong></td><td>Resolve microsoft.com</td><td>🔴 if fails</td></tr>
+        <tr><td><strong>Services</strong></td><td>8 critical Windows services</td><td>⚠️ if any stopped</td></tr>
+        <tr><td><strong>Uptime</strong></td><td>Time since last restart</td><td>⚠️ if &gt;7 days</td></tr>
+    </tbody>
+</table>
+
+<h3>14 Diagnostic Categories</h3>
+<div class="feature-grid">
+    <div class="feature-card"><h5>📧 Outlook / Email</h5><p>"Outlook won't open", "email not loading"</p></div>
+    <div class="feature-card"><h5>💬 Microsoft Teams</h5><p>"Teams crash", "can't join meeting"</p></div>
+    <div class="feature-card"><h5>🖨️ Printing</h5><p>"Can't print", "print job stuck"</p></div>
+    <div class="feature-card"><h5>🌐 Network</h5><p>"No internet", "WiFi not working"</p></div>
+    <div class="feature-card"><h5>⚡ Performance</h5><p>"Computer slow", "freezing", "high CPU"</p></div>
+    <div class="feature-card"><h5>🔄 Windows Update</h5><p>"Update failed", "update stuck"</p></div>
+    <div class="feature-card"><h5>☁️ OneDrive</h5><p>"Files not syncing", "sync stuck"</p></div>
+    <div class="feature-card"><h5>🔐 Authentication</h5><p>"Keeps asking for password", "SSO loop"</p></div>
+    <div class="feature-card"><h5>🏠 Start Menu</h5><p>"Start menu not opening", "search broken"</p></div>
+    <div class="feature-card"><h5>🖼️ Icons</h5><p>"Blank icons", "wrong icons"</p></div>
+    <div class="feature-card"><h5>🖥️ Citrix / VDI</h5><p>"Citrix not working", "black screen"</p></div>
+    <div class="feature-card"><h5>🌍 Browser</h5><p>"Chrome not working", "page not loading"</p></div>
+    <div class="feature-card"><h5>📋 Group Policy</h5><p>"Policy not applying", "GPO not working"</p></div>
+    <div class="feature-card"><h5>💥 System Corruption</h5><p>"Blue screen", "random crashes"</p></div>
+</div>
+
+<div class="tip">
+    <span class="callout-label">💡 Tip</span>
+    The agent remembers which fixes you've already run in the current session and won't suggest them again. Click <strong>"Clear"</strong> to reset.
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  DASHBOARD                                     -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2>📊 Dashboard</h2>
+<p class="section-intro">The home page provides a quick overview of your system's health and key information at a glance.</p>
+
+<ul>
+    <li><strong>System Summary</strong> — Computer name, OS version, CPU, RAM, disk usage</li>
+    <li><strong>Network</strong> — Active adapter, IP address, gateway, DNS servers</li>
+    <li><strong>Health Indicator</strong> — Green / amber / red dot in the sidebar footer</li>
+    <li><strong>Remote Desktop</strong> — Quick launch button to open RDP</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  SYSTEM INFO                                   -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2>💻 System Info</h2>
+<p class="section-intro">Detailed hardware and software inventory — everything a helpdesk tech needs to know about this machine.</p>
+
+<table>
+    <thead><tr><th>Section</th><th>Details Shown</th></tr></thead>
+    <tbody>
+        <tr><td><strong>Operating System</strong></td><td>Edition, version, build number, install date</td></tr>
+        <tr><td><strong>Processor</strong></td><td>CPU model, core count, thread count</td></tr>
+        <tr><td><strong>Memory</strong></td><td>Total RAM, current usage</td></tr>
+        <tr><td><strong>Graphics</strong></td><td>GPU name and driver version</td></tr>
+        <tr><td><strong>Storage</strong></td><td>All drives — capacity, free space, visual usage bars</td></tr>
+        <tr><td><strong>Identity</strong></td><td>Domain, computer name, logged-in user</td></tr>
+    </tbody>
+</table>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  NETWORK                                       -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2>🌐 Network</h2>
+<p class="section-intro">Real-time information about your active network connection. Virtual adapters (Hyper-V, Docker, VMware) are automatically filtered out.</p>
+
+<ul>
+    <li><strong>Adapter</strong> — Name, type (Wi-Fi / Ethernet), MAC address, link speed</li>
+    <li><strong>IPv4</strong> — IP address, subnet mask, default gateway</li>
+    <li><strong>IPv6</strong> — IPv6 address(es) if available</li>
+    <li><strong>DNS</strong> — Primary and secondary DNS servers</li>
+    <li><strong>Quick Actions</strong> — Flush DNS, Release/Renew IP, Open Network Settings</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  PERIPHERALS                                   -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2>🖨️ Peripherals</h2>
+<p class="section-intro">Manage printers, displays, and audio devices from one place.</p>
+
+<h3>Printers</h3>
+<ul>
+    <li>View all installed printers with online/offline status</li>
+    <li><strong>Set Default</strong> — Set any printer as the Windows default</li>
+    <li><strong>Add Printer</strong> — Opens the Windows manual add-printer wizard</li>
+    <li><strong>Remove</strong> — Uninstall a printer</li>
+</ul>
+
+<h3>Display</h3>
+<ul>
+    <li>View current resolution and refresh rate</li>
+    <li>Quick access to Windows display settings</li>
+</ul>
+
+<h3>Audio</h3>
+<ul>
+    <li>View all playback and recording devices</li>
+    <li>Volume slider and mute toggle</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  DRIVERS                                       -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2>🔍 Drivers</h2>
+<p class="section-intro">Complete system driver inventory with status and problem detection.</p>
+
+<ul>
+    <li><strong>Driver List</strong> — Name, version, date, manufacturer, digital signature</li>
+    <li><strong>Status</strong> — Running / Stopped indicator for each driver</li>
+    <li><strong>Problem Flags</strong> — Drivers with issues are highlighted with warnings</li>
+    <li><strong>Actions</strong> — Update driver, disable driver, open Device Manager</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  SERVICES                                      -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2>⚙️ Services</h2>
+<p class="section-intro">View and manage Windows services with start, stop, and restart controls.</p>
+
+<ul>
+    <li><strong>Service List</strong> — Service name, display name, status, startup type</li>
+    <li><strong>Actions</strong> — Start, Stop, Restart individual services</li>
+    <li><strong>Search</strong> — Type to filter services by name</li>
+    <li><strong>Troubleshoot</strong> — Quickly identify stopped services that should be running</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  TROUBLESHOOTING                               -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2>🔧 Troubleshooting</h2>
+<p class="section-intro">One-click fixes for the most common IT support issues. Cards marked with <span class="admin-badge">🛡️ Admin</span> require administrator privileges and will show a UAC prompt.</p>
+
+<h4>Application Resets — No Admin Required</h4>
+<table>
+    <thead><tr><th>Fix</th><th>What It Does</th></tr></thead>
+    <tbody>
+        <tr><td><strong>Reset Teams</strong></td><td>Kills Teams and clears all local cache data</td></tr>
+        <tr><td><strong>Reset Office</strong></td><td>Clears Office cache files and identity tokens</td></tr>
+        <tr><td><strong>Reset Citrix</strong></td><td>Clears Citrix Workspace cache</td></tr>
+        <tr><td><strong>Repair Outlook</strong></td><td>Deletes OST cache file, forces Exchange re-sync</td></tr>
+        <tr><td><strong>Repair OneDrive</strong></td><td>Resets OneDrive sync client and re-initializes</td></tr>
+        <tr><td><strong>Clear Browsers</strong></td><td>Clears Chrome, Edge, and Firefox cache data</td></tr>
+        <tr><td><strong>Clear Credentials</strong></td><td>Removes saved Microsoft/Office passwords from Credential Manager</td></tr>
+    </tbody>
+</table>
+
+<h4>System Actions</h4>
+<table>
+    <thead><tr><th>Fix</th><th>Admin?</th><th>What It Does</th></tr></thead>
+    <tbody>
+        <tr><td><strong>GPUpdate</strong></td><td>No</td><td>Forces Group Policy refresh with <code>gpupdate /force</code></td></tr>
+        <tr><td><strong>Restart Explorer</strong></td><td>No</td><td>Kills and restarts <code>explorer.exe</code></td></tr>
+        <tr><td><strong>Clear Temp Files</strong></td><td>No</td><td>Deletes temporary files from TEMP directories</td></tr>
+        <tr><td><strong>Rebuild Icons</strong></td><td>No</td><td>Deletes icon cache, restarts Explorer to fix blank icons</td></tr>
+        <tr><td><strong>Fix Start Menu</strong></td><td><span class="admin-badge">🛡️ Admin</span></td><td>Re-registers Start Menu and Windows Search shell packages</td></tr>
+    </tbody>
+</table>
+
+<h4>Network & Printing</h4>
+<table>
+    <thead><tr><th>Fix</th><th>Admin?</th><th>What It Does</th></tr></thead>
+    <tbody>
+        <tr><td><strong>Restart Spooler</strong></td><td><span class="admin-badge">🛡️ Admin</span></td><td>Restarts the Print Spooler service</td></tr>
+        <tr><td><strong>Clear Print Queue</strong></td><td><span class="admin-badge">🛡️ Admin</span></td><td>Stops Spooler, deletes all jobs, restarts Spooler</td></tr>
+        <tr><td><strong>Full Network Reset</strong></td><td><span class="admin-badge">🛡️ Admin</span></td><td>Resets Winsock + TCP/IP + DNS flush (reboot recommended)</td></tr>
+        <tr><td><strong>Reset Win Update</strong></td><td><span class="admin-badge">🛡️ Admin</span></td><td>Stops services, clears caches, re-registers DLLs</td></tr>
+    </tbody>
+</table>
+
+<h4>Advanced Diagnostics</h4>
+<table>
+    <thead><tr><th>Fix</th><th>Admin?</th><th>What It Does</th></tr></thead>
+    <tbody>
+        <tr><td><strong>SFC Scan</strong></td><td><span class="admin-badge">🛡️ Admin</span></td><td>System File Checker — scans and repairs OS files (10-30 min)</td></tr>
+        <tr><td><strong>DISM Repair</strong></td><td><span class="admin-badge">🛡️ Admin</span></td><td>DISM RestoreHealth — repairs component store (15-45 min)</td></tr>
+    </tbody>
+</table>
+
+<div class="important">
+    <span class="callout-label">⚠️ Important</span>
+    <span class="admin-badge">🛡️ Admin</span> actions trigger a Windows UAC prompt. Standard users may need an administrator to approve the elevation. The app itself always runs as a standard user.
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  ACTIVITY LOG                                  -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2>📝 Activity Log</h2>
+<p class="section-intro">Complete audit trail of every action performed in the tool during the current session.</p>
+
+<ul>
+    <li><strong>Timestamped entries</strong> — Date, time, category, and message</li>
+    <li><strong>Severity levels</strong> — Info (blue), Warning (amber), Error (red)</li>
+    <li><strong>Search filter</strong> — Type to filter log entries in real time</li>
+    <li><strong>Session-based</strong> — Logs persist for the current app session</li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  TIPS                                          -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2>💡 Tips & Tricks</h2>
+
+<div class="no-break">
+<ol>
+    <li><strong>Use the Agent first</strong> — describe your issue in plain English before manually browsing the Troubleshooting tab</li>
+    <li><strong>Right-click the tray icon</strong> for quick access to any section without opening the full window</li>
+    <li><strong>Run "Scan my system"</strong> periodically to catch issues before they become problems</li>
+    <li><strong>Clear Temp + Clear Browsers</strong> is a quick way to free up disk space</li>
+    <li><strong>Restart your PC</strong> if uptime exceeds 7 days — many issues resolve after a clean restart</li>
+    <li><strong>Non-admin fixes</strong> (no 🛡️ badge) can be run by any user without IT assistance</li>
+    <li><strong>Check Services</strong> tab if a specific Windows feature isn't working — the required service may be stopped</li>
+</ol>
+</div>
+
+<div class="page-footer">
+    Desktop Support Tool v1.0.0 · User Guide · IT Department · Confidential
+</div>
+
+</div>
+</body>
+</html>

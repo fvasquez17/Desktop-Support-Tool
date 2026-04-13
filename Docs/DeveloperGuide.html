@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desktop Support Tool — Developer & Deployment Guide</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap');
+
+        :root {
+            --accent: #3B82F6;
+            --accent-light: #DBEAFE;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --error: #EF4444;
+            --bg: #FFFFFF;
+            --surface: #F8FAFC;
+            --border: #E2E8F0;
+            --text: #1E293B;
+            --text-secondary: #475569;
+            --text-muted: #94A3B8;
+            --code-bg: #0F172A;
+            --code-text: #E2E8F0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text);
+            line-height: 1.7;
+            background: var(--bg);
+            font-size: 10.5pt;
+        }
+
+        @page {
+            margin: 0.75in;
+            size: letter;
+        }
+
+        @media print {
+            body { font-size: 9.5pt; }
+            .cover-page { page-break-after: always; }
+            .toc { page-break-after: always; }
+            h2 { page-break-before: always; }
+            h2:first-of-type { page-break-before: avoid; }
+            .no-break { page-break-inside: avoid; }
+            .note, .tip, .important, .warning { page-break-inside: avoid; }
+            pre { page-break-inside: avoid; }
+            table { page-break-inside: avoid; }
+        }
+
+        /* ─── Cover Page ─── */
+        .cover-page {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .cover-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, #10B981, #059669);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2rem;
+            box-shadow: 0 20px 40px rgba(16, 185, 129, 0.25);
+        }
+
+        .cover-icon span {
+            font-size: 48px;
+            color: white;
+        }
+
+        .cover-page h1 {
+            font-size: 34pt;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .cover-subtitle {
+            font-size: 14pt;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .cover-meta {
+            font-size: 11pt;
+            color: var(--text-muted);
+            line-height: 2;
+        }
+
+        .cover-badge {
+            display: inline-block;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 10pt;
+            font-weight: 600;
+            margin: 0 4px;
+        }
+
+        /* ─── TOC ─── */
+        .toc {
+            padding: 2rem 0;
+        }
+
+        .toc h2 {
+            page-break-before: avoid !important;
+            font-size: 20pt;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+            border: none;
+            padding: 0;
+        }
+
+        .toc-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 8px 0;
+            border-bottom: 1px dotted var(--border);
+            text-decoration: none;
+            color: var(--text);
+        }
+
+        .toc-item:hover { color: var(--accent); }
+
+        .toc-section {
+            font-size: 8pt;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 1.2rem;
+            margin-bottom: 0.3rem;
+        }
+
+        /* ─── Content ─── */
+        .content { max-width: 100%; }
+
+        h2 {
+            font-size: 20pt;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid var(--accent);
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 14pt;
+            font-weight: 700;
+            color: var(--text);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        h4 {
+            font-size: 11pt;
+            font-weight: 700;
+            color: var(--accent);
+            margin-top: 1.2rem;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        p {
+            margin-bottom: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        strong { color: var(--text); }
+
+        /* ─── Tables ─── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 9.5pt;
+        }
+
+        thead th {
+            background: var(--accent);
+            color: white;
+            padding: 8px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        thead th:first-child { border-radius: 6px 0 0 0; }
+        thead th:last-child { border-radius: 0 6px 0 0; }
+
+        tbody td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+
+        tbody tr:nth-child(even) { background: var(--surface); }
+
+        /* ─── Lists ─── */
+        ul, ol {
+            margin: 0.5rem 0 1rem 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        li { margin-bottom: 0.3rem; }
+
+        /* ─── Callouts ─── */
+        .note, .tip, .important, .warning {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-size: 9.5pt;
+            border-left: 4px solid;
+            background: var(--surface);
+            border-color: var(--accent);
+            color: var(--text-secondary);
+        }
+
+        .important {
+            background: #FFF7ED;
+            border-color: var(--warning);
+            color: #9A3412;
+        }
+
+        .warning {
+            background: #FEF2F2;
+            border-color: var(--error);
+            color: #991B1B;
+        }
+
+        .callout-label {
+            font-weight: 700;
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: block;
+            margin-bottom: 4px;
+            color: currentColor;
+        }
+
+        /* ─── Code ─── */
+        code {
+            background: var(--surface);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 9pt;
+            color: #DB2777; /* Pink for inline code */
+            border: 1px solid var(--border);
+        }
+
+        pre {
+            background: var(--code-bg);
+            padding: 12px 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            border: 1px solid var(--text);
+        }
+
+        pre code {
+            background: transparent;
+            padding: 0;
+            border: none;
+            color: var(--code-text);
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 9pt;
+            line-height: 1.5;
+        }
+
+        /* File Tree */
+        .tree {
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 9pt;
+            color: var(--text-secondary);
+            background: var(--surface);
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin: 1rem 0;
+            line-height: 1.5;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        /* ─── Section Intro ─── */
+        .section-intro {
+            font-size: 11pt;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            padding-left: 1rem;
+            border-left: 3px solid var(--accent-light);
+        }
+
+        /* ─── Footer ─── */
+        .page-footer {
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 8.5pt;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  COVER PAGE                                    -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="cover-page">
+    <div class="cover-icon"><span>💻</span></div>
+    <h1>Desktop Support Tool</h1>
+    <div class="cover-subtitle">Developer &amp; Deployment Guide</div>
+    <p class="cover-meta">
+        <span class="cover-badge">Version 1.0.0</span>
+        <span class="cover-badge">.NET 9.0</span>
+        <span class="cover-badge">C# / WPF</span>
+        <br><br>
+        Architecture documentation, modification guides, theme customization,<br>
+        and enterprise mass deployment strategies.
+        <br><br>
+        IT Department · April 2026
+    </p>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  TABLE OF CONTENTS                             -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="toc">
+    <h2>Table of Contents</h2>
+
+    <div class="toc-section">Part 1: Development</div>
+    <div class="toc-item"><span>Architecture Overview</span></div>
+    <div class="toc-item"><span>How to: Add a New Fix</span></div>
+    <div class="toc-item"><span>How to: Add a AI Bot Rule</span></div>
+    <div class="toc-item"><span>How to: Add a New View</span></div>
+    <div class="toc-item"><span>How to: Customize the Theme</span></div>
+    <div class="toc-item"><span>UAC Elevation Model</span></div>
+    <div class="toc-item"><span>Build Commands</span></div>
+
+    <div class="toc-section">Part 2: Mass Deployment</div>
+    <div class="toc-item"><span>Building the Distributable</span></div>
+    <div class="toc-item"><span>Deployment via SCCM / MECM</span></div>
+    <div class="toc-item"><span>Deployment via Microsoft Intune</span></div>
+    <div class="toc-item"><span>Deployment via Group Policy (GPO)</span></div>
+    <div class="toc-item"><span>Auto-Start Configuration</span></div>
+    <div class="toc-item"><span>Security &amp; AppLocker</span></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  ARCHITECTURE                                  -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="content">
+
+<h2>Architecture Overview</h2>
+<p class="section-intro">The application follows an MVVM-inspired structure tailored for a lightweight utility tool. Views are modular, and business logic is entirely decoupled into static services.</p>
+
+<div class="tree">DesktopSupportTool/
+├── App.xaml / .cs              # App lifecycle, theme, tray startup
+├── DesktopSupportTool.csproj   # Project config (.NET 9, WPF + WinForms)
+├── GlobalUsings.cs             # Shared using statements
+│
+├── Models/                     # Data transfer objects (records / POCOs)
+│   ├── ActionResult.cs         # Success/failure result for fixes
+│   └── SystemInfo.cs           # Hardware/OS data etc...
+│
+├── Helpers/                    # Low-level utilities
+│   ├── ElevationHelper.cs      # UAC elevation detection
+│   ├── PowerShellRunner.cs     # PowerShell / CMD execution engine
+│   └── RegistryHelper.cs       # Registry read/write helpers
+│
+├── Services/                   # Business logic layer
+│   ├── HealthCheckService.cs   # Background system health monitor
+│   ├── TroubleshootBot.cs      # AI Support Agent engine (14 rules)
+│   └── TroubleshootService.cs  # All one-click fix implementations
+│
+├── Tray/
+│   └── TrayIconManager.cs      # System tray icon + right-click menu
+│
+└── UI/
+    ├── MainWindow.xaml / .cs   # Shell: sidebar nav + content area
+    └── Views/                  # Each tab is a UserControl
+        ├── AgentBotView.xaml   # AI chat interface
+        └── TroubleshootView    # One-click fix cards</div>
+
+<h3>Design Principles</h3>
+<ul>
+    <li><strong>Modular views</strong> — Each tab is an independent <code>UserControl</code></li>
+    <li><strong>Service layer</strong> — All logic lives in <code>Services/</code>; views only handle UI events</li>
+    <li><strong>Static services</strong> — Services are static classes (no DI container needed)</li>
+    <li><strong>Async everywhere</strong> — All system operations use <code>Task</code> / <code>async await</code></li>
+    <li><strong>Per-action elevation</strong> — The app runs as a standard user; admin ops invoke <code>elevated: true</code></li>
+</ul>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  HOW TO: ADD A FIX                             -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2>How to: Add a New One-Click Fix</h2>
+
+<h3>Step 1 — Add the Fix Method</h3>
+<p>Open <code>Services/TroubleshootService.cs</code> and add a static async method.</p>
+
+<pre><code>/// &lt;summary&gt;
+/// Fixes the flux capacitor sync issues.
+/// &lt;/summary&gt;
+public static async Task&lt;ActionResult&gt; FixFluxCapacitorAsync()
+{
+    _log.Info("Troubleshoot", "Running Flux Capacitor fix...");
+
+    // OPTION A: PowerShell (standard user)
+    var result = await PowerShellRunner.RunAsync(
+        "Restart-Service "Flux" -Force",
+        elevated: false,
+        timeoutSeconds: 30);
+
+    // OPTION B: CMD command (admin elevation — triggers UAC)
+    var adminResult = await PowerShellRunner.RunCmdAsync(
+        "flux.exe /reset",
+        elevated: true);
+
+    return result.Success
+        ? ActionResult.Ok("Fix applied successfully.")
+        : ActionResult.Fail($"Fix failed: {result.Output}");
+}</code></pre>
+
+<h3>Step 2 — Add the UI Card</h3>
+<p>Open <code>UI/Views/TroubleshootView.xaml</code> and add a card in the appropriate <code>&lt;WrapPanel&gt;</code>.</p>
+
+<pre><code>&lt;!-- Your New Fix --&gt;
+&lt;Border Style="{StaticResource Card}" x:Name="CardFlux" MouseLeftButtonUp="Flux_Click"&gt;
+    &lt;StackPanel&gt;
+        &lt;TextBlock FontFamily="{StaticResource IconFont}" Text="&amp;#xE895;" .../&gt;
+        
+        &lt;StackPanel Orientation="Horizontal"&gt;
+            &lt;TextBlock Text="Fix Flux Capacitor" .../&gt;
+            
+            &lt;!-- Include this Badge ONLY if elevated: true --&gt;
+            &lt;Border Background="{StaticResource WarningBrush}"&gt;
+                &lt;TextBlock Text="🛡️ Admin"/&gt;
+            &lt;/Border&gt;
+        &lt;/StackPanel&gt;
+        
+        &lt;TextBlock Text="Resets the flux sync service" .../&gt;
+        &lt;TextBlock x:Name="StatusFlux" Text="" .../&gt;
+    &lt;/StackPanel&gt;
+&lt;/Border&gt;</code></pre>
+
+<h3>Step 3 — Add the Click Handler</h3>
+<p>Open <code>UI/Views/TroubleshootView.xaml.cs</code> to handle the click.</p>
+
+<pre><code>private async void Flux_Click(object sender, MouseButtonEventArgs e)
+{
+    // The RunAction helper handles showing the "running…" status, 
+    // disabling the card, calling the fix, and showing ✅/❌ result.
+    await RunAction(CardFlux, StatusFlux, "Running fix...",
+        () =&gt; TroubleshootService.FixFluxCapacitorAsync());
+}</code></pre>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  HOW TO: AI BOT                                -->
+<!-- ═══════════════════════════════════════════════ -->
+<div class="no-break">
+<h2>How to: Add an AI Bot Rule</h2>
+<p>To make the AI agent understand and suggest your new fix, add a rule to <code>Services/TroubleshootBot.cs</code>.</p>
+
+<pre><code>// Inside TroubleshootBot._rules list:
+(new[] { "flux", "capacitor", "time travel" },           // Keywords (1 pt each)
+ new[] { "flux is broken", "capacitor won't sync" },     // Phrases (3 pts each)
+ "Hardware",                                             // Category Label
+ (snap) =&gt; new Diagnosis("Hardware", "Flux Sync Issues", // Factory function
+     "Flux drift usually requires a manual reset.",
+     new List&lt;SuggestedAction&gt;
+     {
+         new("Fix Flux Capacitor", "Resets the service",
+             TroubleshootService.FixFluxCapacitorAsync,
+             RequiresConfirmation: true),  // True = pops up Ok/Cancel dialog
+     })),
+</code></pre>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  THEMING & CUSTOMIZATION                       -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2>How to: Customize the Theme</h2>
+<p>All colors, styles, and fonts are centrally defined in <code>App.xaml</code>.</p>
+
+<pre><code>&lt;!-- App.xaml — Core Branding Colors --&gt;
+&lt;Color x:Key="BgColor"&gt;#0F172A&lt;/Color&gt;           &lt;!-- Main background --&gt;
+&lt;Color x:Key="SidebarColor"&gt;#0B1120&lt;/Color&gt;       &lt;!-- Sidebar panel --&gt;
+&lt;Color x:Key="SurfaceColor"&gt;#1E293B&lt;/Color&gt;       &lt;!-- Cards / elements --&gt;
+&lt;Color x:Key="AccentColor"&gt;#3B82F6&lt;/Color&gt;        &lt;!-- Primary brand color --&gt;
+&lt;Color x:Key="WarningColor"&gt;#F59E0B&lt;/Color&gt;       &lt;!-- Admin badge / alerts --&gt;</code></pre>
+
+<h3>Change App Title / Company Info</h3>
+<p>1. Edit <code>DesktopSupportTool.csproj</code> for the compiled executable properties:</p>
+<pre><code>&lt;Company&gt;Acme Corporation&lt;/Company&gt;
+&lt;Product&gt;Acme Support Tool&lt;/Product&gt;</code></pre>
+
+<p>2. Edit <code>UI/MainWindow.xaml</code> for the visual UI components:</p>
+<pre><code>&lt;Window ... Title="Acme Support Tool"&gt;
+...
+&lt;TextBlock Text="Acme Support Tool" FontSize="13" /&gt;</code></pre>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  UAC ELEVATION MODEL                           -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2>UAC Elevation Model</h2>
+<p>This application does <strong>NOT</strong> require administrator rights to run. It uses a per-action elevation model, ensuring maximum security and compatibility in locked-down enterprise environments.</p>
+
+<div class="note">
+    <span class="callout-label">Execution Flow</span>
+    <ol>
+        <li>App starts as Standard User.</li>
+        <li>User clicks a standard fix (e.g. "Clear Temp Files").</li>
+        <li>PowerShell script executed invisibly under the current user's context.</li>
+        <li>User clicks an admin fix (e.g. "SFC Scan").</li>
+        <li><code>PowerShellRunner</code> spawns a new process with <code>Verb = "runas"</code>.</li>
+        <li>Windows displays the UAC prompt overlay.</li>
+        <li>Elevated background process runs the command and returns output.</li>
+    </ol>
+</div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!--  DEPLOYMENT GUIDE                              -->
+<!-- ═══════════════════════════════════════════════ -->
+<h2>Part 2: Mass Deployment Guide</h2>
+<p class="section-intro">Strategies for packaging and deploying the Desktop Support Tool to enterprise endpoints.</p>
+
+<h3>Building the Distributable</h3>
+<p>The recommended approach is a <strong>Self-Contained Single-File EXE</strong>. This includes the .NET 9 runtime inside the binary, meaning target PCs need zero prerequisites installed.</p>
+
+<pre><code># Build Self-Contained EXE (~60 MB)
+dotnet publish -c Release --self-contained true -r win-x64 `
+    -p:PublishSingleFile=true `
+    -p:IncludeNativeLibrariesForSelfExtract=true `
+    -p:EnableCompressionInSingleFile=true `
+    -o .\publish</code></pre>
+
+<h3>Deployment via SCCM / MECM</h3>
+
+<h4>Step 1: Application Package</h4>
+<p>Create a Script Installer application. Content location pointing to your network share containing the compiled <code>DesktopSupportTool.exe</code>.</p>
+
+<h4>Step 2: Install Command</h4>
+<p>This script copies the EXE locally and creates a multi-user run key for auto-start.</p>
+<pre><code>powershell -ExecutionPolicy Bypass -Command "
+    $dest = 'C:\Program Files\DesktopSupportTool';
+    New-Item -Path $dest -ItemType Directory -Force;
+    Copy-Item '.\DesktopSupportTool.exe' $dest -Force;
+    $regPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run';
+    Set-ItemProperty -Path $regPath -Name 'DesktopSupportTool' -Value (Join-Path $dest 'DesktopSupportTool.exe');
+"</code></pre>
+
+<h4>Step 3: Detection Method</h4>
+<p>File System → File Exists: <code>C:\Program Files\DesktopSupportTool\DesktopSupportTool.exe</code></p>
+
+<h3>Deployment via Microsoft Intune (MEM)</h3>
+
+<h4>Step 1: Prep the Package</h4>
+<p>Download the Microsoft Win32 Content Prep Tool. Create an <code>install.ps1</code> and <code>uninstall.ps1</code> in a folder next to your EXE, then compile to an <code>.intunewin</code> file.</p>
+<pre><code>IntuneWinAppUtil.exe -c .\SourceFolder -s DesktopSupportTool.exe -o .\Output</code></pre>
+
+<h4>Step 2: Configuration</h4>
+<ul>
+    <li><strong>Install command:</strong> <code>powershell -ep bypass -file install.ps1</code></li>
+    <li><strong>Install behavior:</strong> System</li>
+    <li><strong>Requirements:</strong> Windows 10 21H2 or later</li>
+</ul>
+
+<h3>Deployment via Group Policy (Startup Script)</h3>
+<p>For domains without SCCM/Intune, use a Computer Startup script. This script automatically checks file modification dates to pull updates from the central share.</p>
+
+<pre><code># Deploy-SupportTool.ps1
+$source = "\\fileserver\Software\DesktopSupportTool\DesktopSupportTool.exe"
+$dest = "C:\Program Files\DesktopSupportTool"
+$exePath = "$dest\DesktopSupportTool.exe"
+
+# If current version exists, don't overwrite
+if (Test-Path $exePath) {
+    if ((Get-Item $exePath).LastWriteTime -ge (Get-Item $source).LastWriteTime) { exit 0 }
+}
+
+New-Item -Path $dest -ItemType Directory -Force
+Copy-Item $source $dest -Force
+Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" -Name "DesktopSupportTool" -Value $exePath
+</code></pre>
+
+<h3>Security &amp; AppLocker (WDAC)</h3>
+<div class="important">
+    <span class="callout-label">Application Control</span>
+    If your organization uses strict AppLocker or Windows Defender Application Control (WDAC), you must allowlist the application.
+</div>
+
+<pre><code># AppLocker Publisher Rule Example
+New-AppLockerPolicy -RuleType Path `
+    -RuleNamePrefix "DesktopSupportTool" `
+    -User "Everyone" `
+    -AllowWindows `
+    -Path "C:\Program Files\DesktopSupportTool\*"</code></pre>
+
+<div class="page-footer">
+    Desktop Support Tool v1.0.0 · Developer &amp; Deployment Guide · IT Department
+</div>
+
+</div>
+</body>
+</html>
