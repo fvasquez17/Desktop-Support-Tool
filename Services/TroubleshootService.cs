@@ -413,56 +413,95 @@ public static class TroubleshootService
     /// </summary>
     public static async Task<ActionResult> RepairOutlookAsync()
     {
-        _log.Info("Troubleshoot", "Repairing Outlook profile...");
-        try
-        {
-            // Kill Outlook
-            await ProcessHelper.KillAllAsync("OUTLOOK");
-            await Task.Delay(1500);
+        _log.Info("Troubleshoot", "Repairing Outlook — creating new profile...");
 
-            int cleaned = 0;
-            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var ostPath = Path.Combine(localAppData, "Microsoft", "Outlook");
+        var script = @"
+            $results = @()
 
-            if (Directory.Exists(ostPath))
-            {
-                // Delete OST files (cached mailbox — will re-download)
-                foreach (var ost in Directory.GetFiles(ostPath, "*.ost"))
-                {
-                    try { File.Delete(ost); cleaned++; } catch { }
-                }
-                // Delete XML auto-discover cache
-                foreach (var xml in Directory.GetFiles(ostPath, "*.xml"))
-                {
-                    try { File.Delete(xml); cleaned++; } catch { }
+            # 1. Close Outlook
+            $outlookProc = Get-Process -Name 'OUTLOOK' -ErrorAction SilentlyContinue
+            if ($outlookProc) {
+                Stop-Process -Name 'OUTLOOK' -Force -ErrorAction SilentlyContinue
+                Start-Sleep -Seconds 3
+                $results += 'Outlook closed'
+            }
+
+            # 2. Create a new Outlook profile via registry
+            $profilesPath = 'HKCU:\Software\Microsoft\Office\16.0\Outlook\Profiles'
+            $settingsPath = 'HKCU:\Software\Microsoft\Office\16.0\Outlook'
+
+            # Fallback to Office 15.0 if 16.0 doesn't exist
+            if (-not (Test-Path $settingsPath)) {
+                $profilesPath = 'HKCU:\Software\Microsoft\Office\15.0\Outlook\Profiles'
+                $settingsPath = 'HKCU:\Software\Microsoft\Office\15.0\Outlook'
+            }
+
+            # Generate a unique profile name
+            $timestamp = Get-Date -Format 'MMdd'
+            $newProfileName = ""Outlook-$timestamp""
+
+            # Create the profiles key if it doesn't exist
+            if (-not (Test-Path $profilesPath)) {
+                New-Item -Path $profilesPath -Force | Out-Null
+            }
+
+            # Create the new profile key
+            $newProfilePath = ""$profilesPath\$newProfileName""
+            if (Test-Path $newProfilePath) {
+                # Profile name already exists, add time
+                $newProfileName = ""Outlook-$(Get-Date -Format 'MMdd-HHmm')""
+                $newProfilePath = ""$profilesPath\$newProfileName""
+            }
+            New-Item -Path $newProfilePath -Force | Out-Null
+            $results += ""Created new profile: $newProfileName""
+
+            # 3. Set the new profile as default
+            try {
+                Set-ItemProperty -Path $settingsPath -Name 'DefaultProfile' -Value $newProfileName -ErrorAction Stop
+                $results += ""Set '$newProfileName' as default profile""
+            } catch {
+                # Try the SPI\Profiles path
+                try {
+                    $spiPath = ""$settingsPath\SPI\Profiles""
+                    if (-not (Test-Path $spiPath)) { New-Item -Path $spiPath -Force | Out-Null }
+                    Set-ItemProperty -Path $spiPath -Name 'DefaultProfile' -Value $newProfileName -ErrorAction Stop
+                    $results += ""Set '$newProfileName' as default profile (SPI)""
+                } catch {
+                    $results += 'Could not set default profile automatically'
                 }
             }
 
-            // Clear Outlook profile registry (auto-discover) cache
-            var roamingPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "Microsoft", "Outlook");
-            if (Directory.Exists(roamingPath))
-            {
-                var autoDCache = Path.Combine(roamingPath, "AutoD");
-                if (Directory.Exists(autoDCache))
-                {
-                    SafeDeleteDirectory(autoDCache);
-                    cleaned++;
-                }
+            # 4. Clear AutoDiscover cache (speeds up new profile setup)
+            $autoD = Join-Path $env:LOCALAPPDATA 'Microsoft\Outlook\AutoD'
+            if (Test-Path $autoD) {
+                Remove-Item -Path $autoD -Recurse -Force -ErrorAction SilentlyContinue
+                $results += 'AutoDiscover cache cleared'
             }
 
-            var result = ActionResult.Ok(
-                $"Outlook cache repaired ({cleaned} items cleared). Relaunch Outlook — it will re-sync from Exchange.");
-            _log.LogAction("Troubleshoot", "Repair Outlook", result);
-            return result;
-        }
-        catch (Exception ex)
-        {
-            var result = ActionResult.Fail($"Error repairing Outlook: {ex.Message}");
-            _log.LogAction("Troubleshoot", "Repair Outlook", result);
-            return result;
-        }
+            # 5. Clear XML autodiscover files only (NOT the OST)
+            $outlookLocal = Join-Path $env:LOCALAPPDATA 'Microsoft\Outlook'
+            if (Test-Path $outlookLocal) {
+                $xmlFiles = Get-ChildItem -Path $outlookLocal -Filter '*.xml' -ErrorAction SilentlyContinue
+                foreach ($xml in $xmlFiles) {
+                    try { Remove-Item $xml.FullName -Force } catch { }
+                }
+                if ($xmlFiles.Count -gt 0) { $results += ""Cleared $($xmlFiles.Count) XML cache file(s)"" }
+            }
+
+            # 6. Clear roaming AutoD folder
+            $roamAutoD = Join-Path $env:APPDATA 'Microsoft\Outlook\AutoD'
+            if (Test-Path $roamAutoD) {
+                Remove-Item -Path $roamAutoD -Recurse -Force -ErrorAction SilentlyContinue
+                $results += 'Roaming AutoD cache cleared'
+            }
+
+            Write-Output ($results -join '; ')
+            Write-Output 'New Outlook profile created. Launch Outlook — it will prompt you to configure your email account.'
+        ";
+
+        var result = await PowerShellRunner.RunAsync(script, elevated: false, timeoutSeconds: 15);
+        _log.LogAction("Troubleshoot", "Repair Outlook", result);
+        return result;
     }
 
     // ─── Credential Manager Clear ────────────────────────────────

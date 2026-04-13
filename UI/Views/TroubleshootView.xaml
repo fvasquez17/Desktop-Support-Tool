@@ -83,7 +83,7 @@
                         <TextBlock Text="Repair Outlook" FontSize="15" FontWeight="SemiBold"
                                    Foreground="{StaticResource TextPrimaryBrush}"
                                    FontFamily="{StaticResource MainFont}"/>
-                        <TextBlock Text="Delete OST cache, force re-sync"
+                        <TextBlock Text="Create new profile &amp; set as default"
                                    FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
                                    TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
                         <TextBlock x:Name="StatusOutlook" Text="" FontSize="11" Margin="0,6,0,0"

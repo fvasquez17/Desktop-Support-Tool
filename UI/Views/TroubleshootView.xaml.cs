@@ -138,7 +138,7 @@ public partial class TroubleshootView : UserControl
     private async void RepairOutlook_Click(object sender, MouseButtonEventArgs e)
     {
         var answer = MessageBox.Show(
-            "This will close Outlook and delete its local cache (OST).\nYour mailbox will re-download from Exchange on next launch.\n\nContinue?",
+            "This will close Outlook and create a new mail profile.\nYour existing OST data will NOT be deleted.\nOutlook will prompt you to set up your email on next launch.\n\nContinue?",
             "Repair Outlook",
             MessageBoxButton.YesNo,
             MessageBoxImage.Question);
