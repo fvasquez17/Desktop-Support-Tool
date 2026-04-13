@@ -443,6 +443,145 @@
                 </Border>
             </WrapPanel>
 
+            <!-- ═══ SOFTWARE CENTER / APP DEPLOYMENT ═══ -->
+            <TextBlock Text="SOFTWARE CENTER / APP DEPLOYMENT" FontSize="11" FontWeight="Bold"
+                       Foreground="{StaticResource TextTertiaryBrush}" Margin="0,0,0,10"/>
+            <WrapPanel Margin="0,0,0,24">
+
+                <!-- SCCM Client Repair -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardSccm" MouseLeftButtonUp="SccmRepair_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE74C;"
+                                   FontSize="28" Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,0,10"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="SCCM Repair" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontFamily="{StaticResource MainFont}"/>
+                            <Border Background="{StaticResource WarningBrush}" CornerRadius="4"
+                                    Padding="5,1,5,2" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="🛡️ Admin" FontSize="9" FontWeight="Bold"
+                                           Foreground="White" FontFamily="{StaticResource MainFont}"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Restart CCMExec + trigger policy &amp; app eval"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusSccm" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+            </WrapPanel>
+
+            <!-- ═══ FILE ASSOCIATION / DEFAULT APPS ═══ -->
+            <TextBlock Text="FILE ASSOCIATION / DEFAULT APPS" FontSize="11" FontWeight="Bold"
+                       Foreground="{StaticResource TextTertiaryBrush}" Margin="0,0,0,10"/>
+            <WrapPanel Margin="0,0,0,24">
+
+                <!-- Reset Default Apps -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardDefaultApps" MouseLeftButtonUp="ResetDefaultApps_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE71D;"
+                                   FontSize="28" Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,0,10"/>
+                        <TextBlock Text="Reset Default Apps" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock Text="Reset all default app associations"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusDefaultApps" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Fix File Associations -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardFileAssoc" MouseLeftButtonUp="RepairFileAssoc_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE8A5;"
+                                   FontSize="28" Foreground="{StaticResource WarningBrush}"
+                                   Margin="0,0,0,10"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Fix File Associations" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontFamily="{StaticResource MainFont}"/>
+                            <Border Background="{StaticResource WarningBrush}" CornerRadius="4"
+                                    Padding="5,1,5,2" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="🛡️ Admin" FontSize="9" FontWeight="Bold"
+                                           Foreground="White" FontFamily="{StaticResource MainFont}"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Repair broken .pdf, .docx, .xlsx associations"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusFileAssoc" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+            </WrapPanel>
+
+            <!-- ═══ USER PROFILE & LOGIN ═══ -->
+            <TextBlock Text="USER PROFILE &amp; LOGIN" FontSize="11" FontWeight="Bold"
+                       Foreground="{StaticResource TextTertiaryBrush}" Margin="0,0,0,10"/>
+            <WrapPanel Margin="0,0,0,24">
+
+                <!-- Fix Temp Profile -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardTempProfile" MouseLeftButtonUp="FixTempProfile_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE77B;"
+                                   FontSize="28" Foreground="{StaticResource ErrorBrush}"
+                                   Margin="0,0,0,10"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Fix Temp Profile" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontFamily="{StaticResource MainFont}"/>
+                            <Border Background="{StaticResource WarningBrush}" CornerRadius="4"
+                                    Padding="5,1,5,2" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="🛡️ Admin" FontSize="9" FontWeight="Bold"
+                                           Foreground="White" FontFamily="{StaticResource MainFont}"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Detect .bak profile in registry &amp; repair"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusTempProfile" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Scan Profile Cache -->
+                <Border Style="{StaticResource Card}" Margin="0,0,10,10" Width="200" Cursor="Hand"
+                        x:Name="CardProfileCache" MouseLeftButtonUp="ClearProfileCache_Click">
+                    <StackPanel>
+                        <TextBlock FontFamily="{StaticResource IconFont}" Text="&#xE748;"
+                                   FontSize="28" Foreground="{StaticResource AccentBrush}"
+                                   Margin="0,0,0,10"/>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Scan Profile Cache" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       FontFamily="{StaticResource MainFont}"/>
+                            <Border Background="{StaticResource WarningBrush}" CornerRadius="4"
+                                    Padding="5,1,5,2" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="🛡️ Admin" FontSize="9" FontWeight="Bold"
+                                           Foreground="White" FontFamily="{StaticResource MainFont}"/>
+                            </Border>
+                        </StackPanel>
+                        <TextBlock Text="Find stale profiles &amp; TEMP folders"
+                                   FontSize="11" Foreground="{StaticResource TextTertiaryBrush}"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                        <TextBlock x:Name="StatusProfileCache" Text="" FontSize="11" Margin="0,6,0,0"
+                                   TextWrapping="Wrap" FontFamily="{StaticResource MainFont}"/>
+                    </StackPanel>
+                </Border>
+
+            </WrapPanel>
+
         </StackPanel>
     </ScrollViewer>
 </UserControl>

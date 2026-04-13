@@ -35,7 +35,8 @@ public partial class TroubleshootView : UserControl
         var adminCards = new[]
         {
             CardStartMenu, CardPrint, CardQueue, CardNetReset,
-            CardWinUpdate, CardSfc, CardDism, CardIntune
+            CardWinUpdate, CardSfc, CardDism, CardIntune,
+            CardSccm, CardFileAssoc, CardTempProfile, CardProfileCache
         };
 
         if (!_isAdmin)
@@ -314,5 +315,77 @@ public partial class TroubleshootView : UserControl
             await RunAction(CardIntune, StatusIntune, "Syncing with Intune...",
                 () => TroubleshootService.SyncIntuneAsync());
         }
+    }
+
+    // ─── Software Center / SCCM ─────────────────────────────────
+
+    private async void SccmRepair_Click(object sender, MouseButtonEventArgs e)
+    {
+        var answer = MessageBox.Show(
+            "This will restart the SCCM client (CCMExec) and trigger:\n• Machine Policy retrieval\n• App Deployment evaluation\n• Software Update scan\n\nRequires administrator privileges. Continue?",
+            "SCCM Client Repair",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (answer == MessageBoxResult.Yes)
+        {
+            await RunAction(CardSccm, StatusSccm, "Repairing SCCM client...",
+                () => TroubleshootService.RepairSccmClientAsync());
+        }
+    }
+
+    // ─── File Association / Default Apps ─────────────────────────
+
+    private async void ResetDefaultApps_Click(object sender, MouseButtonEventArgs e)
+    {
+        var answer = MessageBox.Show(
+            "This will reset all default app associations.\nWindows will prompt you to choose apps for common file types.\n\nExplorer will restart. Continue?",
+            "Reset Default Apps",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (answer == MessageBoxResult.Yes)
+        {
+            await RunAction(CardDefaultApps, StatusDefaultApps, "Resetting default apps...",
+                () => TroubleshootService.ResetDefaultAppsAsync());
+        }
+    }
+
+    private async void RepairFileAssoc_Click(object sender, MouseButtonEventArgs e)
+    {
+        var answer = MessageBox.Show(
+            "This will repair broken file associations for common types:\n.pdf, .docx, .xlsx, .pptx, .txt, .csv\n\nExplorer will restart. Continue?",
+            "Fix File Associations",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Question);
+
+        if (answer == MessageBoxResult.Yes)
+        {
+            await RunAction(CardFileAssoc, StatusFileAssoc, "Repairing file associations...",
+                () => TroubleshootService.RepairFileAssociationsAsync());
+        }
+    }
+
+    // ─── User Profile & Login ───────────────────────────────────
+
+    private async void FixTempProfile_Click(object sender, MouseButtonEventArgs e)
+    {
+        var answer = MessageBox.Show(
+            "This will scan the registry for .bak profile entries\nand attempt to repair the Temporary Profile issue.\n\nA sign-out/sign-in will be required after repair.\n\nRequires administrator privileges. Continue?",
+            "Fix Temporary Profile",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (answer == MessageBoxResult.Yes)
+        {
+            await RunAction(CardTempProfile, StatusTempProfile, "Scanning for temp profile issues...",
+                () => TroubleshootService.FixTempProfileAsync());
+        }
+    }
+
+    private async void ClearProfileCache_Click(object sender, MouseButtonEventArgs e)
+    {
+        await RunAction(CardProfileCache, StatusProfileCache, "Scanning profile cache...",
+            () => TroubleshootService.ClearProfileCacheAsync());
     }
 }

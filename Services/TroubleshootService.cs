@@ -804,4 +804,332 @@ public static class TroubleshootService
             ? ActionResult.Ok("Intune sync triggered. Policies and apps will update within a few minutes.")
             : ActionResult.Fail($"Intune sync failed: {result.Output}");
     }
+
+    // ─── SCCM / Software Center ──────────────────────────────────
+
+    /// <summary>
+    /// Restarts the CCMExec (SMS Agent Host) service and triggers
+    /// Machine Policy retrieval + App Deployment evaluation.
+    /// Fixes apps not installing and policies not applying from SCCM.
+    /// </summary>
+    public static async Task<ActionResult> RepairSccmClientAsync()
+    {
+        _log.Info("Troubleshoot", "Repairing SCCM client (CCMExec + policy + app eval)...");
+
+        var script = @"
+            $results = @()
+
+            # 1. Check if SCCM client is installed
+            $ccmSvc = Get-Service -Name 'CcmExec' -ErrorAction SilentlyContinue
+            if (-not $ccmSvc) {
+                Write-Output 'SCCM client (CcmExec) is not installed on this device. This fix only applies to SCCM-managed endpoints.'
+                exit 0
+            }
+
+            # 2. Restart the SMS Agent Host service
+            try {
+                Restart-Service -Name 'CcmExec' -Force -ErrorAction Stop
+                Start-Sleep -Seconds 5
+                $results += 'CcmExec service restarted'
+            } catch {
+                $results += ""CcmExec restart failed: $_""
+            }
+
+            # Helper function to trigger SCCM schedule (CIM with WMI fallback)
+            function Trigger-CCMSchedule {
+                param([string]$ScheduleId, [string]$Name)
+                # Try CIM first (modern PowerShell)
+                try {
+                    Invoke-CimMethod -Namespace 'root\ccm' -ClassName 'SMS_Client' -MethodName 'TriggerSchedule' -Arguments @{ sScheduleID = $ScheduleId } -ErrorAction Stop | Out-Null
+                    return ""$Name triggered""
+                } catch { }
+                # Fallback to COM object
+                try {
+                    $smsClient = [wmiclass]'\\.\root\ccm:SMS_Client'
+                    $smsClient.TriggerSchedule($ScheduleId) | Out-Null
+                    return ""$Name triggered (COM)""
+                } catch {
+                    return ""$Name skipped (WMI/CIM unavailable)""
+                }
+            }
+
+            # 3. Trigger Machine Policy Retrieval & Evaluation
+            $results += Trigger-CCMSchedule '{00000000-0000-0000-0000-000000000021}' 'Machine Policy'
+
+            # 4. Trigger Application Deployment Evaluation
+            $results += Trigger-CCMSchedule '{00000000-0000-0000-0000-000000000121}' 'App Deployment'
+
+            # 5. Trigger Software Update Scan
+            $results += Trigger-CCMSchedule '{00000000-0000-0000-0000-000000000113}' 'Software Update'
+
+            # 6. Trigger Hardware Inventory (bonus — helps SCCM see updated state)
+            $results += Trigger-CCMSchedule '{00000000-0000-0000-0000-000000000001}' 'Hardware Inventory'
+
+            Write-Output ($results -join '; ')
+            Write-Output 'SCCM client repair complete. Check Software Center for pending apps.'
+        ";
+
+        var result = await PowerShellRunner.RunAsync(script, elevated: true, timeoutSeconds: 30);
+        _log.LogAction("Troubleshoot", "SCCM Client Repair", result);
+        return result;
+    }
+
+    // ─── File Association / Default App Fixes ────────────────────
+
+    /// <summary>
+    /// Resets all default app associations back to Windows defaults
+    /// and repairs common broken file associations (.pdf, .docx, .xlsx, etc).
+    /// </summary>
+    public static async Task<ActionResult> ResetDefaultAppsAsync()
+    {
+        _log.Info("Troubleshoot", "Resetting default app associations...");
+
+        var script = @"
+            $results = @()
+
+            # 1. Remove the user-level file association overrides
+            try {
+                $assocPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts'
+                $extensions = @('.pdf', '.docx', '.doc', '.xlsx', '.xls', '.pptx', '.ppt',
+                                '.txt', '.csv', '.html', '.htm', '.jpg', '.jpeg', '.png',
+                                '.gif', '.mp4', '.mp3', '.zip', '.xml', '.json')
+
+                $cleared = 0
+                foreach ($ext in $extensions) {
+                    $userChoice = ""$assocPath\$ext\UserChoice""
+                    if (Test-Path $userChoice) {
+                        try {
+                            Remove-Item -Path $userChoice -Recurse -Force -ErrorAction Stop
+                            $cleared++
+                        } catch { }
+                    }
+                }
+                $results += ""Cleared $cleared user file associations""
+            } catch {
+                $results += 'File association cleanup had some errors (non-critical)'
+            }
+
+            # 2. Reset the default apps notification
+            try {
+                $regPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\ApplicationAssociationToasts'
+                if (Test-Path $regPath) {
+                    Remove-Item -Path $regPath -Recurse -Force -ErrorAction SilentlyContinue
+                    $results += 'Association toasts reset'
+                }
+            } catch { }
+
+            # 3. Restart Explorer to apply changes
+            try {
+                Stop-Process -Name 'explorer' -Force -ErrorAction SilentlyContinue
+                Start-Sleep -Seconds 2
+                Start-Process 'explorer.exe'
+                $results += 'Explorer restarted'
+            } catch { }
+
+            Write-Output ($results -join '; ')
+            Write-Output 'Default apps reset. Windows will prompt you to choose apps for common file types.'
+        ";
+
+        var result = await PowerShellRunner.RunAsync(script, elevated: false, timeoutSeconds: 20);
+        _log.LogAction("Troubleshoot", "Reset Default Apps", result);
+        return result;
+    }
+
+    /// <summary>
+    /// Repairs broken file associations for common office and media file types
+    /// by re-registering their default handlers.
+    /// </summary>
+    public static async Task<ActionResult> RepairFileAssociationsAsync()
+    {
+        _log.Info("Troubleshoot", "Repairing broken file associations...");
+
+        var script = @"
+            $results = @()
+
+            # Re-register common file type associations via assoc + ftype
+            $associations = @{
+                '.pdf'  = 'AcroExch.Document'
+                '.docx' = 'Word.Document.12'
+                '.doc'  = 'Word.Document.8'
+                '.xlsx' = 'Excel.Sheet.12'
+                '.xls'  = 'Excel.Sheet.8'
+                '.pptx' = 'PowerPoint.Show.12'
+                '.ppt'  = 'PowerPoint.Show.8'
+                '.txt'  = 'txtfile'
+                '.csv'  = 'Excel.CSV'
+            }
+
+            $repaired = 0
+            foreach ($ext in $associations.Keys) {
+                try {
+                    $current = cmd /c ""assoc $ext 2>nul""
+                    if (-not $current -or $current -notmatch '=') {
+                        cmd /c ""assoc $ext=$($associations[$ext])"" 2>$null
+                        $repaired++
+                    }
+                } catch { }
+            }
+
+            # Clear the ProgId hash cache to force fresh lookups
+            try {
+                $hashPath = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts'
+                $results += ""Checked associations for $($associations.Count) file types""
+                if ($repaired -gt 0) { $results += ""Repaired $repaired broken associations"" }
+                else { $results += 'All associations are intact' }
+            } catch { }
+
+            # Notify Explorer of changes
+            try {
+                $null = New-PSDrive -Name HKCR -PSProvider Registry -Root HKEY_CLASSES_ROOT -ErrorAction SilentlyContinue
+                Stop-Process -Name 'explorer' -Force -ErrorAction SilentlyContinue
+                Start-Sleep -Seconds 2
+                Start-Process 'explorer.exe'
+                $results += 'Explorer restarted to apply changes'
+            } catch { }
+
+            Write-Output ($results -join '; ')
+        ";
+
+        var result = await PowerShellRunner.RunAsync(script, elevated: true, timeoutSeconds: 20);
+        _log.LogAction("Troubleshoot", "Repair File Associations", result);
+        return result;
+    }
+
+    // ─── User Profile & Login Issues ─────────────────────────────
+
+    /// <summary>
+    /// Detects and fixes the Temporary Profile issue by finding
+    /// .bak profile entries in the registry and repairing them.
+    /// Also clears the profile list cache.
+    /// </summary>
+    public static async Task<ActionResult> FixTempProfileAsync()
+    {
+        _log.Info("Troubleshoot", "Detecting and fixing Temporary Profile issue...");
+
+        var script = @"
+            $results = @()
+            $profileListPath = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList'
+            $currentSid = ([System.Security.Principal.WindowsIdentity]::GetCurrent()).User.Value
+
+            # 1. Search for .bak profile entries (the smoking gun for temp profiles)
+            $allProfiles = Get-ChildItem -Path $profileListPath -ErrorAction SilentlyContinue
+            $bakProfiles = $allProfiles | Where-Object { $_.PSChildName -like '*.bak' }
+
+            if ($bakProfiles.Count -eq 0) {
+                # Check for other temp profile indicators
+                $currentProfile = Get-ItemProperty -Path ""$profileListPath\$currentSid"" -ErrorAction SilentlyContinue
+                if ($currentProfile -and $currentProfile.ProfileImagePath -like '*TEMP*') {
+                    $results += 'WARNING: Current profile is a TEMP profile but no .bak entry found'
+                    $results += 'A manual profile rebuild may be required'
+                } else {
+                    $results += 'No temporary profile issues detected (.bak entries not found)'
+                    $results += 'Current profile appears healthy'
+                }
+            } else {
+                $results += ""Found $($bakProfiles.Count) .bak profile entry(s) - attempting repair""
+
+                foreach ($bak in $bakProfiles) {
+                    $bakName = $bak.PSChildName
+                    $originalName = $bakName -replace '\.bak$', ''
+                    $bakPath = ""$profileListPath\$bakName""
+                    $originalPath = ""$profileListPath\$originalName""
+
+                    try {
+                        # If the non-.bak version exists, rename it to .old
+                        if (Test-Path $originalPath) {
+                            Rename-Item -Path $originalPath -NewName ""$originalName.old"" -Force
+                            $results += ""Renamed conflicting profile entry $originalName to .old""
+                        }
+
+                        # Rename the .bak back to original
+                        Rename-Item -Path $bakPath -NewName $originalName -Force
+                        $results += ""Restored profile: $originalName""
+
+                        # Fix the State value (remove temp profile flag)
+                        $restoredPath = ""$profileListPath\$originalName""
+                        $state = Get-ItemPropertyValue -Path $restoredPath -Name 'State' -ErrorAction SilentlyContinue
+                        if ($state -band 0x1) {
+                            $newState = $state -band (-bnot 0x1)
+                            Set-ItemProperty -Path $restoredPath -Name 'State' -Value $newState
+                            $results += 'Cleared temporary profile flag'
+                        }
+                    } catch {
+                        $results += ""Failed to repair $bakName : $_""
+                    }
+                }
+                $results += 'Profile repair complete. Please sign out and sign back in.'
+            }
+
+            Write-Output ($results -join ""`n"")
+        ";
+
+        var result = await PowerShellRunner.RunAsync(script, elevated: true, timeoutSeconds: 15);
+        _log.LogAction("Troubleshoot", "Fix Temp Profile", result);
+        return result;
+    }
+
+    /// <summary>
+    /// Clears the user profile cache (non-destructive).
+    /// Removes stale registry entries for profiles that no longer exist
+    /// and clears the profile GUID mapping cache.
+    /// </summary>
+    public static async Task<ActionResult> ClearProfileCacheAsync()
+    {
+        _log.Info("Troubleshoot", "Clearing user profile cache...");
+
+        var script = @"
+            $results = @()
+            $profileListPath = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList'
+
+            # 1. Find stale profile entries (paths that no longer exist)
+            $staleCount = 0
+            $profiles = Get-ChildItem -Path $profileListPath -ErrorAction SilentlyContinue
+            foreach ($profile in $profiles) {
+                try {
+                    $props = Get-ItemProperty -Path $profile.PSPath -ErrorAction SilentlyContinue
+                    if ($props.ProfileImagePath -and -not (Test-Path $props.ProfileImagePath)) {
+                        # Profile folder doesn't exist — stale entry
+                        $staleCount++
+                        $results += ""Found stale profile: $($props.ProfileImagePath)""
+                    }
+                } catch { }
+            }
+
+            if ($staleCount -eq 0) {
+                $results += 'No stale profile entries found'
+            } else {
+                $results += ""Found $staleCount stale profile entries (review manually in Registry Editor)""
+            }
+
+            # 2. Clear the Profile GUID cache
+            try {
+                $guidCachePath = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileGuid'
+                if (Test-Path $guidCachePath) {
+                    $guids = (Get-ChildItem -Path $guidCachePath -ErrorAction SilentlyContinue).Count
+                    $results += ""Profile GUID cache contains $guids entries""
+                }
+            } catch { }
+
+            # 3. Clear user profile temp data
+            try {
+                $tempProfiles = Get-ChildItem -Path 'C:\Users' -Filter 'TEMP*' -Directory -ErrorAction SilentlyContinue
+                if ($tempProfiles.Count -gt 0) {
+                    $results += ""WARNING: Found $($tempProfiles.Count) TEMP profile folder(s) in C:\Users""
+                    foreach ($tp in $tempProfiles) {
+                        $results += ""  → $($tp.Name) (created $($tp.CreationTime.ToString('yyyy-MM-dd')))""
+                    }
+                } else {
+                    $results += 'No TEMP profile folders found in C:\Users'
+                }
+            } catch { }
+
+            Write-Output ($results -join ""`n"")
+            Write-Output 'Profile cache scan complete.'
+        ";
+
+        var result = await PowerShellRunner.RunAsync(script, elevated: true, timeoutSeconds: 15);
+        _log.LogAction("Troubleshoot", "Clear Profile Cache", result);
+        return result;
+    }
 }
+

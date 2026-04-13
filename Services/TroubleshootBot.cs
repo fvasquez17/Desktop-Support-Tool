@@ -343,6 +343,55 @@ public static class TroubleshootBot
                  new("Run GPUpdate", "Also refresh Group Policy settings",
                      TroubleshootService.RunGpUpdateAsync),
              })),
+
+        // ── SCCM / Software Center ──
+        (new[] { "sccm", "ccmexec", "software center", "configmgr", "mecm", "app deployment", "sms agent" },
+         new[] { "app not installing", "software center not working", "sccm not syncing",
+                 "app stuck installing", "policies not applying sccm", "ccm not running" },
+         "Deployment",
+         (snap) => new Diagnosis("Deployment", "SCCM / Software Center Issues",
+             "SCCM client issues are often resolved by restarting the SMS Agent Host (CCMExec) " +
+             "and triggering Machine Policy retrieval and App Deployment evaluation cycles.",
+             new List<SuggestedAction>
+             {
+                 new("SCCM Repair", "Restart CCMExec + trigger policy & app eval",
+                     TroubleshootService.RepairSccmClientAsync, RequiresConfirmation: true),
+                 new("Sync Intune", "Also try Intune sync if co-managed",
+                     TroubleshootService.SyncIntuneAsync, RequiresConfirmation: true),
+             })),
+
+        // ── File Association / Default Apps ──
+        (new[] { "file association", "default app", "open with", "file type", "extension", "handler" },
+         new[] { "files won't open", "wrong app opens", "pdf won't open", "docx won't open",
+                 "can't open file", "file opens in wrong app", "broken association" },
+         "FileAssociations",
+         (snap) => new Diagnosis("FileAssociations", "File Association / Default App Issues",
+             "When files open in the wrong app or don't open at all, " +
+             "it's usually caused by corrupted registry entries in the user's file association settings.",
+             new List<SuggestedAction>
+             {
+                 new("Reset Default Apps", "Clear all user file association overrides",
+                     TroubleshootService.ResetDefaultAppsAsync, RequiresConfirmation: true),
+                 new("Fix File Associations", "Repair broken .pdf, .docx, .xlsx associations",
+                     TroubleshootService.RepairFileAssociationsAsync, RequiresConfirmation: true),
+             })),
+
+        // ── User Profile / Temp Profile ──
+        (new[] { "profile", "temp profile", "temporary profile", "user profile", "login", "desktop missing" },
+         new[] { "signed in with a temporary profile", "temp profile", "missing desktop",
+                 "files missing after login", "profile not loading", "can't find my files" },
+         "Profile",
+         (snap) => new Diagnosis("Profile", "User Profile / Temporary Profile Issues",
+             "The 'temporary profile' error occurs when Windows can't load your user profile, " +
+             "usually due to a corrupted .bak entry in the ProfileList registry key. " +
+             "Your files are still on the disk — they just need to be reconnected.",
+             new List<SuggestedAction>
+             {
+                 new("Fix Temp Profile", "Detect and repair .bak profile entries in registry",
+                     TroubleshootService.FixTempProfileAsync, RequiresConfirmation: true),
+                 new("Scan Profile Cache", "Find stale profiles & TEMP folders",
+                     TroubleshootService.ClearProfileCacheAsync, RequiresConfirmation: true),
+             })),
     };
 
     // ═══════════════════════════════════════════════════════════
